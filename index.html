@@ -455,6 +455,86 @@
   <script src="js/students-data.js?v=20261023_v13"></script>
 
   <!-- Kulüp Web Sitesi JS -->
-  <script src="js/website.js?v=20261023_v13"></script>
+  <script src="js/website.js?v=20261023_v13"></script><!-- Mergen AI - Geleneksel Türk Okçuluğu Asistanı Başlangıcı -->
+<div id="mergen-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: 'Segoe UI', sans-serif;">
+  
+  <!-- Mergen Sohbet Açma Butonu -->
+  <button id="mergen-btn" onclick="toggleMergenChat()" style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #f59e0b; border: 2px solid #f59e0b; border-radius: 50px; padding: 8px 16px 8px 8px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 10px; font-size: 15px; transition: transform 0.2s;">
+    <img src="halk/birleşme.jpg" alt="Mergen" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #f59e0b;">
+    <span style="letter-spacing: 0.5px; padding-right: 6px;">MERGEN</span>
+  </button>
+
+  <!-- Mergen Sohbet Penceresi -->
+  <div id="mergen-box" style="display: none; width: 350px; height: 480px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); flex-direction: column; overflow: hidden; margin-bottom: 12px; border: 2px solid #1e3a8a;">
+    
+    <!-- Üst Başlık -->
+    <div style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #f59e0b; padding: 12px 16px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f59e0b;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="halk/birleşme.jpg" alt="Mergen" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid #f59e0b;">
+        <div>
+          <div style="font-size: 15px; letter-spacing: 1px; color: #ffffff;">MERGEN</div>
+          <div style="font-size: 10.5px; color: #f59e0b; font-weight: normal;">GTOK Dijital Bilgesi</div>
+        </div>
+      </div>
+      <button onclick="toggleMergenChat()" style="background: none; border: none; color: #f59e0b; font-size: 18px; cursor: pointer; font-weight: bold;">✕</button>
+    </div>
+
+    <!-- Mesaj Alanı -->
+    <div id="mergen-messages" style="flex: 1; padding: 14px; overflow-y: auto; font-size: 13.5px; background-color: #f8fafc; display: flex; flex-direction: column; gap: 10px;">
+      <div style="background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 3px solid #f59e0b; line-height: 1.4;">
+        Esenlikler! Ben Mergen. KTÜ Geleneksel Türk Okçuluğu Kulübü hakkında merak ettiğin her şeyi bana sorabilirsin.
+      </div>
+    </div>
+
+    <!-- Mesaj Giriş Alanı -->
+    <div style="padding: 10px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; background-color: #ffffff;">
+      <input type="text" id="mergen-input" placeholder="Mergen'e bir soru sor..." style="flex: 1; padding: 10px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 13px; color: #0f172a;" onkeypress="if(event.key==='Enter') sendMergenMessage()">
+      <button onclick="sendMergenMessage()" style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: #f59e0b; border: 1px solid #f59e0b; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px;">Gönder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleMergenChat() {
+  const box = document.getElementById('mergen-box');
+  box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+}
+
+function sendMergenMessage() {
+  const input = document.getElementById('mergen-input');
+  const messages = document.getElementById('mergen-messages');
+  const text = input.value.trim();
+  if(!text) return;
+
+  // Kullanıcı mesajı
+  const userMsg = document.createElement('div');
+  userMsg.style.cssText = 'background-color: #f59e0b; color: #0f172a; font-weight: 600; padding: 10px 14px; border-radius: 12px 12px 2px 12px; margin-left: auto; max-width: 85%; width: fit-content; text-align: right; box-shadow: 0 2px 5px rgba(0,0,0,0.08);';
+  userMsg.innerText = text;
+  messages.appendChild(userMsg);
+  input.value = '';
+  messages.scrollTop = messages.scrollHeight;
+
+  // Yapay Zeka Yanıtı
+  setTimeout(() => {
+    const aiMsg = document.createElement('div');
+    aiMsg.style.cssText = 'background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; font-size: 13.5px; box-shadow: 0 3px 8px rgba(0,0,0,0.15); border-left: 3px solid #f59e0b; line-height: 1.4;';
+    
+    const query = text.toLowerCase();
+    if(query.includes('üye') || query.includes('kayıt') || query.includes('katıl')) {
+      aiMsg.innerText = '🎯 Kulübümüze üye olmak için stantlarımızı ziyaret edebilir veya duyurularımızı takip edebilirsin!';
+    } else if(query.includes('antrenman') || query.includes('saat') || query.includes('nerede')) {
+      aiMsg.innerText = '🎯 Antrenmanlarımız Kanuni Kampüsü alanında belirlenen gün ve saatlerde gerçekleşmektedir.';
+    } else if(query.includes('ok') || query.includes('yay') || query.includes('geleneksel') || query.includes('mergen')) {
+      aiMsg.innerText = '🎯 Kulübümüzde Geleneksel Türk Okçuluğu teknikleri, menzil atışları, yay ve ok kullanımı eğitimi verilmektedir.';
+    } else {
+      aiMsg.innerText = '🎯 Hedef tam isabet! Detaylı bilgi ve soruların için kulüp yönetimimizle iletişime geçebilirsin.';
+    }
+    
+    messages.appendChild(aiMsg);
+    messages.scrollTop = messages.scrollHeight;
+  }, 600);
+}
+</script>
+<!-- Mergen AI Bitişi -->
 </body>
 </html>
