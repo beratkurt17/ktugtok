@@ -520,15 +520,85 @@ function sendMergenMessage() {
     aiMsg.style.cssText = 'background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 12px 12px 12px 2px; max-width: 85%; font-size: 13.5px; box-shadow: 0 3px 8px rgba(0,0,0,0.15); border-left: 3px solid #f59e0b; line-height: 1.4;';
     
     const query = text.toLowerCase();
-    if(query.includes('üye') || query.includes('kayıt') || query.includes('katıl')) {
-      aiMsg.innerText = '🎯 Kulübümüze üye olmak için stantlarımızı ziyaret edebilir veya duyurularımızı takip edebilirsin!';
-    } else if(query.includes('antrenman') || query.includes('saat') || query.includes('nerede')) {
-      aiMsg.innerText = '🎯 Antrenmanlarımız Kanuni Kampüsü alanında belirlenen gün ve saatlerde gerçekleşmektedir.';
-    } else if(query.includes('ok') || query.includes('yay') || query.includes('geleneksel') || query.includes('mergen')) {
-      aiMsg.innerText = '🎯 Kulübümüzde Geleneksel Türk Okçuluğu teknikleri, menzil atışları, yay ve ok kullanımı eğitimi verilmektedir.';
+   // Etimolojik terimler, yönetim, konum ve akıllı yönlendirme veritabanı
+    const ktugtokBilgi = {
+        baskan: "Feride Şahin",
+        baskanYardimcisi: "Berat Kurt",
+        etkinlikPlanlama: ["Azra Nur Delikkaya", "İlyas Söğütlü"],
+        malzemeSorumlusu: "Akif Serkan Dikmen",
+        egitimBirimi: ["İkbal Berra Özen", "Hale Nur Özkurt", "Fuat Filizkol"],
+        sponsorluk: ["Muhammed Özgür Girgin", "Mehmet Uğur Şahin"],
+        sosyalMedya: ["Güleser Bilgin", "Yusuf Islam Taşdemir", "Nazlı Sude Topal"],
+        instagram: "@ktuokculuk",
+        konum: "Antrenmanlarımızı Karadeniz Teknik Üniversitesi Sağlık, Kültür ve Spor Dairesi Başkanlığı (SKS) yanında bulunan Hasan Polat Kapalı Spor Salonu'nun alt katındaki okçuluk salonumuzda gerçekleştiriyoruz. 🏹📍"
+    };
+
+    const okculukTerimleri = {
+        "ok": "**Ok:** Eski Türkçe *uk / ok* kökünden türemiştir. 'Seğirtmek, fırlamak, hedef doğrultusunda gitmek' eylemleriyle ilişkilidir.",
+        "yay": "**Yay:** Eski Türkçe *yaymak* (germek, uzatmak) eyleminden gelir. Türk kompozit yayı; ahşap, manda boynuzu ve sinir bileşiminden oluşur.",
+        "kabza": "**Kabza:** Arapça *ḳbḍ* (tutmak, kavramak) kökünden gelir. Yayın el ile tutulan merkez kısmıdır.",
+        "kasan": "**Kasan:** Türkçe kökenlidir. Yayın eğrilik kazanan, kabza ile başlar arasındaki esnek omuz bölümüdür.",
+        "sal": "**Sal:** Yayın kabza ile kasan arasında kalan, atış esnasında bükülerek gücü depolayan gövde kanatlarıdır.",
+        "kiriş": "**Kiriş:** Eski Türkçe *ker- / kiriş* (germek) kökünden gelir. Yaya kurulan, oku fırlatıcı ana ip hattıdır.",
+        "zihgir": "**Zihgir (Çile Yüzüğü):** Farsça *zih* (kiriş) ve *gīr* (tutan) kelimelerinden türemiştir. Başparmak çekiş tekniğinde parmağı koruyan yüzüktür.",
+        "puta": "**Puta:** İçerisinde deri/saman doldurularak hedef haline getirilen armut biçimli geleneksel hedeflerdir.",
+        "tirkeş": "**Tirkeş (Sadak):** Okların konulduğu ve dökülmeden taşındığı özel deri kılıftır.",
+        "sadak": "**Sadak:** Eski Türkçe *sadaq* (muhafaza kılıfı) kelimesinden gelir.",
+        "kemankeş": "**Kemankeş:** Okçuluk tekkelerinde icazet almış liyakatli ustalara verilen unvandır.",
+        "menzil": "**Menzil:** Okun atılabildiği en uzak mesafe veya rekor atış alanlarıdır.",
+        "kepaze": "**Kepaze:** Okçuların kas yapısını güçlendirmek ve form tutmak için kullandığı yumuşak antrenman yaylarıdır.",
+        "çile": "**Çile:** Yayın ipine verilen isim olduğu gibi, okçunun ustalaşmak için katlandığı sabır sürecidir.",
+        "ya hak": "**Ya Hak!:** 'Hak olan Allah'ın adıyla!' anlamına gelir. Kadim okçular oku salarken bu zikri söyler."
+    };
+
+    let cevapMetni = "";
+    let soruMetni = soru.Küçük Harfe();
+
+    if (soruMetni.içerir('nerede') || soruMetni.içerir('nerde') || soruMetni.içerir('konum') || soruMetni.içerir('yer') || soruMetni.içerir('salon') || soruMetni.içerir('adres')) {
+        cevapMetni = ktugtokBilgi.konum;
     } else {
-      aiMsg.innerText = '🎯 Hedef tam isabet! Detaylı bilgi ve soruların için kulüp yönetimimizle iletişime geçebilirsin.';
+        let terimBulundu = false;
+        for (let terim in okculukTerimleri) {
+            if (soruMetni.içerir(terim)) {
+                cevapMetni = okculukTerimleri[terim] + " 🏹📚";
+                terimBulundu = true;
+                break;
+            }
+        }
+        if (!terimBulundu) {
+            if (soruMetni.içerir('başkan kim') || soruMetni.içerir('baskan')) {
+                if (soruMetni.içerir('yardımcı') || soruMetni.içerir('yardimci')) {
+                    cevapMetni = `Kulüp Başkan Yardımcımız **${ktugtokBilgi.baskanYardimcisi}**'dur. 🏹`;
+                } else {
+                    cevapMetni = `Kulüp Başkanımız **${ktugtokBilgi.baskan}**'dir. 🎯`;
+                }
+            } else if (soruMetni.içerir('eğitim') || soruMetni.içerir('koç') || soruMetni.içerir('antrenman')) {
+                cevapMetni = `Eğitim birimi sorumlularımız: **${ktugtokBilgi.egitimBirimi.join(", ")}**'dur. Geleneksel okçuluk teknikleri ve eğitimlerimiz hakkında kendilerinden bilgi alabilirsin! 🏹🎯\n\n` + ktugtokBilgi.konum;
+            } else if (soruMetni.içerir('etkinlik') || soruMetni.içerir('organizasyon') || soruMetni.içerir('planlama')) {
+                cevapMetni = `Etkinlik planlama sorumlularımız: **${ktugtokBilgi.etkinlikPlanlama.join(" ve ")}**'dır. 🎯`;
+            } else if (soruMetni.içerir('malzeme') || soruMetni.içerir('ekipman')) {
+                cevapMetni = `Malzeme sorumlumuz **${ktugtokBilgi.malzemeSorumlusu}**'dir. Yay ve ok ekipmanları hakkında kendisine danışabilirsin! 🏹`;
+            } else if (soruMetni.içerir('sponsor') || soruMetni.içerir('destek')) {
+                cevapMetni = `Sponsorluk sorumlularımız: **${ktugtokBilgi.sponsorluk.join(" ve ")}**'dir. 🤝🎯`;
+            } else if (soruMetni.içerir('instagram') || soruMetni.içerir('sosyal medya') || soruMetni.içerir('hesap')) {
+                cevapMetni = `Sosyal medya ekibimiz: **${ktugtokBilgi.sosyalMedya.join(", ")}**'dır. Instagram hesabımız: **${ktugtokBilgi.instagram}** 📸🏹`;
+            } else if (soruMetni.içerir('mergen') || soruMetni.içerir('kimsin')) {
+                cevapMetni = "Ben **Mergen**! Türk mitolojisinde akıl, bilgelik ve bilgi tanrısıyım. Geleneksel Türk Okçuluğu Kulübü'nün (KTÜ GTOK) dijital bilgesi olarak sorularına yanıt vermek için buradayım! 🏹";
+            } else if (soruMetni.içerir('merhaba') || soruMetni.içerir('selam')) {
+                cevapMetni = "Oğuz'un ve Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk terimleri hakkında merak ettiğin bir soru var mı? 🎯";
+            } else {
+                cevapMetni = `Bu konuda yönetim kurulu size yardımcı olabilir. WhatsApp topluluğu üzerinden ilgilendiğiniz konuyla alakalı yetkili birimizle iletişime geçebilirsiniz:\n\n` +
+                             `• **Genel Yönetim & Başkanlık:** Feride Şahin veya Berat Kurt\n` +
+                             `• **Eğitim & Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol\n` +
+                             `• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü\n` +
+                             `• **Malzeme & Ekipman:** Akif Serkan Dikmen\n` +
+                             `• **Sponsorluk & Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin\n` +
+                             `• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal\n\n` +
+                             `Hangi konuyla alakalı bilgi almak isterseniz yukarıdaki ekibimize ulaşabilirsiniz! 🎯🏹`;
+            }
+        }
     }
+    aimMsg.iç metin = cevapMetni;
     
     messages.appendChild(aiMsg);
     messages.scrollTop = messages.scrollHeight;
