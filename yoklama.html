@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTÜ GTOK - Okçuluk Kulübü QR Yoklama Sistemi</title>
+  <meta name="description" content="Karadeniz Teknik Üniversitesi Geleneksel Türk Okçuluk Kulübü (KTÜ GTOK) 0 maliyetli QR kodlu yoklama ve sporcu takip sistemi.">
+  
+  <!-- Modern Fontlar -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Yerel Kütüphaneler (100% Çevrimdışı ve Hızlı) -->
+  <script src="lib/qrcode.min.js"></script>
+  <script src="lib/html5-qrcode.min.js"></script>
+  <script>
+    if (!window.Html5Qrcode) {
+      document.write('<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"><\/script>');
+    }
+  </script>
+  <script src="lib/xlsx.full.min.js"></script>
+  <script>
+    if (!window.XLSX) {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+    }
+  </script>
+  <script src="lib/confetti.browser.min.js"></script>
+  
+  <!-- Özel Okçuluk Teması Stilleri -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Antrenör & Yönetici Güvenlik Giriş Bariyeri -->
+  <div id="admin-auth-overlay" style="position:fixed; inset:0; z-index:999999; background:rgba(10, 15, 29, 0.98); backdrop-filter:blur(16px); display:flex; align-items:center; justify-content:center; padding:1.5rem;">
+    <div style="max-width:420px; width:100%; background:var(--bg-card); border:1px solid rgba(212, 163, 115, 0.35); border-radius:var(--radius-xl); padding:2.5rem 2rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.8); text-align:center;">
+      <div style="width:64px; height:64px; margin:0 auto 1.25rem; border-radius:50%; background:rgba(212,163,115,0.12); border:1px solid rgba(212,163,115,0.3); display:flex; align-items:center; justify-content:center; font-size:1.9rem;">
+        🔐
+      </div>
+      <h2 style="color:#fff; font-size:1.35rem; font-weight:800; margin-bottom:0.4rem; font-family:'Outfit',sans-serif;">Antrenör & Yetkili Girişi</h2>
+      <p style="color:#94a3b8; font-size:0.86rem; line-height:1.5; margin-bottom:1.5rem;">
+        QR yoklama motoru ve sporcu yönetim paneli yalnızca kulüp antrenörleri ve yetkili yöneticilere açıktır.
+      </p>
+      <form id="admin-auth-form" onsubmit="handleAdminLogin(event)">
+        <div style="margin-bottom:1.25rem; text-align:left;">
+          <label style="display:block; font-size:0.8rem; font-weight:600; color:#cbd5e1; margin-bottom:0.4rem;">Antrenör / Yönetici Şifresi</label>
+          <input type="password" id="admin-auth-pass" class="form-control" placeholder="Şifrenizi giriniz..." autofocus required style="width:100%; padding:0.75rem 1rem; background:rgba(0,0,0,0.35); border:1px solid var(--border-color); color:#fff; border-radius:var(--radius-md);">
+          <div id="admin-auth-error" style="color:#f87171; font-size:0.8rem; margin-top:0.4rem; display:none;">⚠️ Şifre hatalı! Lütfen antrenör şifresini kontrol ediniz.</div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:0.75rem; font-weight:700; margin-bottom:0.75rem;">Sistemi Aç</button>
+        <a href="index.html" class="btn btn-secondary" style="width:100%; display:inline-block; padding:0.65rem; text-decoration:none; text-align:center;">⬅ Kulüp Web Sitesine Dön</a>
+      </form>
+    </div>
+  </div>
+  <script>
+    function checkAdminAuth() {
+      const auth = sessionStorage.getItem('gtok_admin_auth');
+      const overlay = document.getElementById('admin-auth-overlay');
+      if (auth === 'true') {
+        if (overlay) overlay.style.display = 'none';
+      } else {
+        if (overlay) overlay.style.display = 'flex';
+      }
+    }
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const pass = document.getElementById('admin-auth-pass').value.trim();
+      const savedPass = localStorage.getItem('gtok_admin_password') || 'gtok2026';
+      if (pass === savedPass) {
+        sessionStorage.setItem('gtok_admin_auth', 'true');
+        document.getElementById('admin-auth-overlay').style.display = 'none';
+      } else {
+        document.getElementById('admin-auth-error').style.display = 'block';
+      }
+    }
+    checkAdminAuth();
+  </script>
+
+  <!-- Üst Bar / Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">🏹</div>
+        <div class="brand-text">
+          <h1 class="club-name-text">KTÜ GTOK Okçuluk Kulübü</h1>
+          <p>Karadeniz Teknik Üniversitesi • QR Yoklama & Sporcu Takip Sistemi</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="index.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; padding:0.45rem 0.85rem; border-radius:8px; font-weight:600; font-size:0.85rem; background:rgba(212,175,55,0.15); color:#facc15; border:1px solid rgba(212,175,55,0.35); transition:all 0.2s;" onmouseover="this.style.background='rgba(212,175,55,0.25)'" onmouseout="this.style.background='rgba(212,175,55,0.15)'">
+          🏛️ Kulüp Ana Sayfası
+        </a>
+        <div class="cloud-badge disconnected" id="header-cloud-badge" title="Bulut Veritabanı Durumu" style="display: none;">
+          <span class="cloud-dot" id="header-cloud-dot"></span>
+          <span id="header-cloud-status">Bulut: Yerel Mod</span>
+        </div>
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span id="header-today-count">0 Katılım</span>
+        </div>
+        <div class="time-display" id="header-live-time">Yükleniyor...</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigasyon Sekmeleri -->
+  <nav class="nav-tabs" role="tablist">
+    <button class="nav-tab active" data-tab="tab-scanner">
+      <span>🎯</span> Hızlı QR Yoklama
+    </button>
+    <button class="nav-tab" data-tab="tab-sessions">
+      <span>⏰</span> Antrenman Seansları & Gruplar
+      <span class="tab-badge" id="total-sessions-count">0 Seans</span>
+    </button>
+    <button class="nav-tab" data-tab="tab-students">
+      <span>🏹</span> KTÜ Okçuları & QR Kartlar
+      <span class="tab-badge" id="total-students-count">0 Sporcu</span>
+    </button>
+    <button class="nav-tab" data-tab="tab-history">
+      <span>📅</span> Geçmiş & Yoklama Defteri
+    </button>
+    <button class="nav-tab" data-tab="tab-excel">
+      <span>📥</span> Excel (.xlsx) Aktarım
+    </button>
+    <button class="nav-tab" data-tab="tab-announcements">
+      <span>📢</span> Web Duyuruları
+    </button>
+    <button class="nav-tab" data-tab="tab-settings">
+      <span>⚙️</span> Kulüp Ayarları & Yedek
+    </button>
+  </nav>
+
+  <!-- Ana İçerik -->
+  <main class="main-content">
+
+    <!-- SEKME 1: HIZLI QR YOKLAMA -->
+    <section id="tab-scanner" class="tab-pane active">
+
+      <!-- Sade Aktif Seans Bilgi Şeridi -->
+      <div style="margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.65rem 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">⏰ Yoklama Seansı:</span>
+          <select id="active-session-select" class="form-control" style="width: auto; padding: 0.35rem 0.75rem; font-size: 0.88rem; font-weight: 700; color: #38bdf8; border-color: rgba(56, 189, 248, 0.35); background: rgba(0,0,0,0.3);" onchange="SessionManager.handleSessionChange(this.value)">
+            <!-- Dinamik doldurulacak -->
+          </select>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <div style="font-size: 0.85rem; color: #94a3b8;">
+            Seans Katılımı: <span id="session-attended-count" style="color: #4ade80; font-weight: 700;">0</span> / <span id="session-total-count" style="font-weight: 700;">0</span> Okçu
+          </div>
+          <button class="btn btn-secondary" onclick="appSwitchTab('tab-sessions')" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+            <span>📅 Seansları Yönet & Listeleri Aç</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="scanner-grid">
+        
+        <!-- Sol Panel: Kamera, Resimden QR ve Okutucu -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="icon">📷</span> Canlı Kamera & QR Okutucu
+            </h2>
+            <span id="camera-status-text" style="font-size: 0.85rem; color: #94a3b8;">Kamera Kapalı</span>
+          </div>
+
+          <!-- Kamera & Sürükle-Bırak Çerçevesi -->
+          <div class="camera-box" id="camera-box-dropzone">
+            <div id="reader"></div>
+            
+            <!-- Okçuluk Hedef Göstergesi Çerçevesi -->
+            <div class="scanner-overlay" id="scanner-overlay" style="display: none;">
+              <div class="target-aim">
+                <div class="scan-laser"></div>
+              </div>
+            </div>
+
+            <!-- Resimden Okuma İçin Gizli Tarayıcı Konteyneri -->
+            <div id="reader-file-temp" style="display: none;"></div>
+          </div>
+
+          <!-- İpucu / Bilgi Bandı -->
+          <div class="camera-box-dropzone-hint">
+            💡 <strong>İpucu:</strong> QR resmini bu kutunun içine <u>sürükleyip bırakabilir</u> veya WhatsApp Web'den kopyalayıp <u>Ctrl + V</u> ile yapıştırabilirsiniz.
+          </div>
+
+          <!-- Kamera & Dosya Kontrolleri -->
+          <div class="camera-controls">
+            <button id="btn-toggle-camera" class="btn btn-primary" style="flex: 1;">
+              <span>📷 Kamerayı Başlat</span>
+            </button>
+
+            <!-- Resimden / Galeriden QR Oku Butonu -->
+            <label class="btn btn-secondary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+              <span>📁 Galeriden / Dosyadan QR Seç</span>
+              <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+            </label>
+
+            <select id="camera-select" class="form-control" style="flex: 1; max-width: 180px;">
+              <option value="">Kamera Seç...</option>
+            </select>
+          </div>
+
+          <!-- Kartını Unutanlar İçin Hızlı Manuel Yoklama Arama Kutusu -->
+          <div class="quick-search-box">
+            <label class="form-label" style="display: flex; justify-content: space-between;">
+              <span>🔍 Kartını Unutan Sporcuyu Hızlı Ekle</span>
+              <small style="color: var(--gold);">İsim veya Öğrenci No yazın</small>
+            </label>
+            <div class="search-input-wrapper">
+              <span class="icon">👤</span>
+              <input type="text" id="quick-search-input" class="input-field" placeholder="Örn: Alperen, 415820 veya Metehan...">
+            </div>
+            <div id="quick-search-results" class="search-results-dropdown" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- Sağ Panel: Bugün Katılanlar / Beklenenler Canlı Akışı -->
+        <div class="card">
+          <div class="card-header live-stream-header" style="flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem;">
+              <button class="btn btn-secondary" id="btn-stream-attended" style="padding: 0.35rem 0.75rem; font-size: 0.82rem; border-color: var(--gold);" onclick="AttendanceManager.setStreamTab('ATTENDED')">
+                <span>🎯 Gelenler</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-stream-expected" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;" onclick="AttendanceManager.setStreamTab('EXPECTED')">
+                <span>⏳ Beklenenler</span>
+              </button>
+            </div>
+            <span class="stats-counter" id="today-count-badge">0 Okçu</span>
+          </div>
+
+          <div class="attendance-scroll-list" id="today-attendance-list">
+            <!-- Dinamik doldurulacak -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEKME: ANTRENMAN SEANSLARI & DERS GRUPLARI (KUTUCUK KUTUCUK GÖRÜNÜM) -->
+    <section id="tab-sessions" class="tab-pane">
+      <div class="toolbar" style="margin-bottom: 1.5rem; justify-content: space-between;">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 0.6rem;">
+            <span>⏰</span> Antrenman Seansları ve Ders Grupları
+          </h2>
+          <p style="font-size: 0.86rem; color: #94a3b8; margin-top: 0.25rem;">
+            Her kutucuk ayrı bir antrenman saatini temsil eder. Kutucuğa tıklayarak listeyi açabilir, dersin yoklamasını ayrı alabilir ve Excel indirebilirsiniz.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="document.getElementById('excel-sessions-auto-import').click()" title="Form yanıtlarını içeren Excel dosyasını yükleyin, gruplar otomatik oluşsun">
+            <span>📥 Form / Excel Yükle (Otomatik Grupla)</span>
+          </button>
+          <input type="file" id="excel-sessions-auto-import" accept=".xlsx, .xls, .csv" style="display: none;" onchange="ExcelExporter.handleSessionExcelImport(this)">
+
+          <button class="btn btn-primary" onclick="SessionManager.openCreateModal()">
+            <span>+ Yeni Seans / Grup Ekle</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KUTUCUK KUTUCUK SEANS LİSTESİ -->
+      <div id="sessions-grid-container" class="sessions-grid">
+        <!-- Dinamik olarak kutucuklar buraya render edilecek -->
+      </div>
+    </section>
+
+    <!-- SEKME 2: SPORCULAR VE DİJİTAL QR KARTLAR -->
+    <section id="tab-students" class="tab-pane">
+      <div class="toolbar">
+        <div class="toolbar-search">
+          <input type="text" id="student-search-input" class="form-control" placeholder="Okçu ara (Ad, Öğrenci No, Fakülte, Bölüm)...">
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; align-items: center;">
+          <select id="student-session-filter" class="form-control" style="width: auto; border-color: rgba(56, 189, 248, 0.45); color: #38bdf8;" onchange="StudentsManager.renderStudentsList()">
+            <option value="ALL">Tüm Antrenman Grupları</option>
+          </select>
+
+          <select id="student-category-filter" class="form-control" style="width: auto;">
+            <option value="ALL">Tüm Kategoriler</option>
+          </select>
+
+          <select id="student-role-filter" class="form-control" style="width: auto; border-color: rgba(212, 163, 115, 0.45); color: var(--gold);" onchange="StudentsManager.renderStudentsList()">
+            <option value="ALL">Tüm Kadro</option>
+            <option value="YK">⚜️ Sadece Yönetim Kurulu</option>
+            <option value="MEMBER">🏹 Sadece Sporcular</option>
+          </select>
+
+          <button class="btn btn-secondary" onclick="document.getElementById('excel-student-import-input').click()" title="Excel (.xlsx, .xls, .csv) dosyasından toplu okçu aktar">
+            <span>📥 Excel / CSV Yükle</span>
+          </button>
+          <input type="file" id="excel-student-import-input" accept=".xlsx, .xls, .csv" style="display: none;" onchange="ExcelExporter.handleFileInput(this)">
+
+          <button class="btn btn-secondary" onclick="ExcelExporter.exportStudents('csv')" title="Tüm kayıtlı üyeleri CSV formatında indir">
+            <span>📄 CSV İndir</span>
+          </button>
+
+          <button class="btn btn-secondary" onclick="StudentsManager.printAllCards()">
+            <span>🖨️ Toplu Kartları Yazdır (A4)</span>
+          </button>
+
+          <button class="btn btn-primary" onclick="StudentsManager.openAddModal()">
+            <span>+ Yeni Okçu Ekle</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="students-grid" id="students-container">
+        <!-- Dinamik doldurulacak -->
+      </div>
+    </section>
+
+    <!-- SEKME 3: GEÇMİŞ GÜNLER & YOKLAMA DEFTERİ -->
+    <section id="tab-history" class="tab-pane">
+      <div class="card">
+        <div class="card-header">
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <h2 class="card-title">
+              <span class="icon">📅</span> Tarihe Göre Yoklama İncele
+            </h2>
+            <input type="date" id="history-date-picker" class="form-control" style="width: auto;">
+          </div>
+          <div id="history-summary-text" style="font-size: 0.95rem;">
+            Katılım durumu hesaplanıyor...
+          </div>
+        </div>
+
+        <div id="history-list-container" style="overflow-x: auto; margin-top: 1rem;">
+          <!-- Tablo dinamik yüklenecek -->
+        </div>
+      </div>
+    </section>
+
+    <!-- SEKME 4: EXCEL (.xlsx) AKTARIM MERKEZİ -->
+    <section id="tab-excel" class="tab-pane">
+      <!-- 1. İÇE AKTARIM (EXCEL'DEN TOPLU OKÇU / ÜYE YÜKLEME) -->
+      <div class="card" style="margin-bottom: 1.5rem; border: 1px solid rgba(212, 163, 115, 0.35); background: linear-gradient(180deg, rgba(21, 24, 31, 0.95) 0%, rgba(15, 17, 23, 0.98) 100%);">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+          <h2 class="card-title" style="display: flex; align-items: center; gap: 0.6rem; margin: 0;">
+            <span class="icon">📥</span> Excel'den 330 Kişilik Üye Listesini İçe Aktar
+          </h2>
+          <span style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 600;">⚡ Otomatik Akıllı Sütun Tanıma</span>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin-top: 0.75rem; line-height: 1.6;">
+          Google Forms, kulüp kayıt formunuz veya öğrenci işlerinden indirdiğiniz Excel / CSV dosyasını doğrudan seçin. Sistem sütunları (<strong>Ad Soyad</strong>, <strong>No</strong>, <strong>Bölüm</strong>, <strong>Fakülte</strong>, <strong>Telefon</strong>) otomatik tanır ve her bir okçu için saniyeler içinde çalışan <strong>dijital QR kartı</strong> üretir.
+        </p>
+
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; align-items: center;">
+          <label class="btn btn-primary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0.85rem 1.4rem;">
+            <span>📁 Dosya Seç (.xlsx / .csv / .xls)</span>
+            <input type="file" id="excel-tab-import-input" accept=".xlsx, .xls, .csv" style="display: none;" onchange="ExcelExporter.handleFileInput(this)">
+          </label>
+
+          <button class="btn btn-secondary" onclick="ExcelExporter.downloadTemplate('xlsx')" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>📄 Excel Şablonu (.xlsx)</span>
+          </button>
+
+          <button class="btn btn-secondary" onclick="ExcelExporter.downloadTemplate('csv')" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <span>📄 CSV Şablonu (.csv)</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 1.25rem; padding: 0.9rem 1.1rem; border-radius: var(--radius-md); background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color); font-size: 0.85rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
+          <div>💡 <strong>Yükleme İpuçları:</strong></div>
+          <div>• <strong>CSV ve Excel formatlarının ikisi de desteklenir:</strong> Google Forms'tan veya Excel'den indirdiğiniz <code>.csv</code> ya da <code>.xlsx</code> dosyasını doğrudan seçebilirsiniz.</div>
+          <div>• Excel tablonuzda yalnızca <strong>Ad Soyad</strong> sütunu olması bile yeterlidir.</div>
+          <div>• Eğer numara sütunu yoksa sistem otomatik olarak sırayla <code>0001</code>, <code>0002</code>, <code>0003</code>... kulüp sicil numaralarını dağıtır.</div>
+          <div>• Supabase bulut veritabanınız bağlıysa, yüklenen tüm üyeler otomatik olarak buluta da yedeklenir.</div>
+        </div>
+      </div>
+
+      <!-- 2. DIŞA AKTARIM (RAPORLAR) -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="icon">📊</span> Raporları Excel (.xlsx) veya CSV Olarak İndirme
+          </h2>
+          <span style="color: #10b981; font-weight: 600;">✓ Türkçe Karakter Uyumlu (UTF-8 BOM)</span>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+          Yoklama kayıtlarınızı ve kulüp okçu listesini kulüp yönetimi veya arşiviniz için hem Microsoft Excel hem de evrensel CSV formatında indirebilirsiniz.
+        </p>
+
+        <div class="excel-feature-cards">
+          <!-- Format 1: Resmi Aylık Matris -->
+          <div class="excel-card">
+            <div>
+              <div class="excel-card-header">
+                <div class="excel-icon-box">📑</div>
+                <div>
+                  <h3 style="font-size: 1.1rem; color: #fff;">Aylık Resmi Matris Çizelgesi</h3>
+                  <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">
+                    Satırlarda okçular, sütunlarda gün gün katılım (G / -) ve en sonda Toplam Katılım sütunu.
+                  </p>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 1.25rem;">
+                <label class="form-label">Rapor Ayı Seçin:</label>
+                <input type="month" id="excel-month-select" class="form-control">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
+              <button class="btn btn-success" onclick="ExcelExporter.exportMatrix('xlsx')" style="flex: 1;">
+                <span>📥 Excel (.xlsx)</span>
+              </button>
+              <button class="btn btn-secondary" onclick="ExcelExporter.exportMatrix('csv')">
+                <span>📄 CSV İndir</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Format 2: Detaylı Ham Liste -->
+          <div class="excel-card">
+            <div>
+              <div class="excel-card-header">
+                <div class="excel-icon-box">📋</div>
+                <div>
+                  <h3 style="font-size: 1.1rem; color: #fff;">Detaylı Zaman Damgalı Liste</h3>
+                  <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">
+                    Her yoklamanın tam tarih, saat, okçu no ve kategori bilgilerini içeren kronolojik liste.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
+              <button class="btn btn-primary" onclick="ExcelExporter.exportDetailedList('xlsx')" style="flex: 1;">
+                <span>📥 Excel (.xlsx)</span>
+              </button>
+              <button class="btn btn-secondary" onclick="ExcelExporter.exportDetailedList('csv')">
+                <span>📄 CSV İndir</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Format 3: Tüm Üye Listesi -->
+          <div class="excel-card">
+            <div>
+              <div class="excel-card-header">
+                <div class="excel-icon-box" style="background: rgba(212, 163, 115, 0.1); border-color: rgba(212, 163, 115, 0.3); color: var(--accent-gold);">👥</div>
+                <div>
+                  <h3 style="font-size: 1.1rem; color: #fff;">Tüm Kayıtlı Okçu Listesi</h3>
+                  <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.25rem;">
+                    Sistemdeki tüm kayıtlı okçuların no, isim, bölüm, fakülte ve telefon bilgilerini içeren güncel liste.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;">
+              <button class="btn btn-primary" onclick="ExcelExporter.exportStudents('xlsx')" style="flex: 1;">
+                <span>📥 Excel (.xlsx)</span>
+              </button>
+              <button class="btn btn-secondary" onclick="ExcelExporter.exportStudents('csv')">
+                <span>📄 CSV Olarak İndir</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEKME 5: KULÜP AYARLARI VE YEDEKLEME -->
+    <section id="tab-settings" class="tab-pane">
+      <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem;">
+
+        <!-- KART: KULÜP AYARLARI -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="icon">⚙️</span> Kulüp Ayarları
+            </h2>
+          </div>
+
+          <form id="settings-form">
+            <div class="form-group">
+              <label class="form-label">Kulüp / Topluluk Adı</label>
+              <input type="text" id="setting-club-name" class="form-control" placeholder="Karadeniz Teknik Üniversitesi Geleneksel Türk Okçuluk Kulübü">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Kulüp Kısaltması / Kod</label>
+              <input type="text" id="setting-club-code" class="form-control" placeholder="KTÜ GTOK">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem;">
+              <input type="checkbox" id="setting-sound-toggle" checked style="width: 18px; height: 18px; accent-color: var(--gold);">
+              <label for="setting-sound-toggle" style="cursor: pointer; font-size: 0.95rem; font-weight: 600;">
+                🔊 QR Okutulduğunda "Bip!" Onay Sesini Çal
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">
+              <span>💾 Ayarları Kaydet</span>
+            </button>
+          </form>
+
+          <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
+          <div>
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #fff;">💾 Manuel Dosya Yedekleme</h3>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">
+              İstediğiniz zaman tüm sporcu ve yoklama verilerini tek bir JSON dosyası olarak bilgisayarınıza indirebilir veya geri yükleyebilirsiniz.
+            </p>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-secondary" id="btn-export-backup">
+                <span>📤 Tüm Verileri İndir (.json)</span>
+              </button>
+
+              <label class="btn btn-secondary" style="cursor: pointer;">
+                <span>📥 Yedeği Geri Yükle</span>
+                <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+              </label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEKME: WEB SİTESİ DUYURULARI (SADECE ANTRENÖR/YÖNETİCİ) -->
+    <section id="tab-announcements" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; background: rgba(255, 255, 255, 0.02); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">📢 Kulüp Web Sitesi Duyuruları</h2>
+          <p style="font-size: 0.85rem; color: #94a3b8;">Kulüp ana sayfasında sporculara gösterilen duyurular yalnızca bu yetkili panelden yönetilebilir.</p>
+        </div>
+        <button class="btn btn-primary" onclick="AnnouncementsAdmin.openModal()">
+          <span>+</span> Yeni Duyuru Ekle
+        </button>
+      </div>
+
+      <div id="admin-announcements-list" style="display: flex; flex-direction: column; gap: 0.85rem;">
+        <!-- Dinamik doldurulur -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: SPORCU EKLE / DÜZENLE -->
+  <div class="modal-backdrop" id="student-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="student-modal-title" style="font-size: 1.15rem; font-weight: 700; color: #fff;">Yeni Okçu Ekle</h3>
+        <button class="btn btn-secondary btn-icon-only" onclick="StudentsManager.closeModal()">✕</button>
+      </div>
+
+      <form id="student-form">
+        <input type="hidden" id="student-is-edit" value="0">
+        <input type="hidden" id="student-old-id" value="">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Kulüp / Okçu No (İstediğiniz Numarayı Verebilirsiniz) *</label>
+            <input type="text" id="student-id-input" class="form-control" required placeholder="Örn: 0001">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Adı Soyadı *</label>
+            <input type="text" id="student-name-input" class="form-control" required placeholder="Örn: Alperen Kılıç">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fakülte</label>
+            <input type="text" id="student-faculty-input" class="form-control" placeholder="Örn: Mühendislik Fakültesi, İİBF vb.">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Bölüm</label>
+            <input type="text" id="student-department-input" class="form-control" placeholder="Örn: Bilgisayar Mühendisliği, Hukuk vb.">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Kategori / Seans Grubu</label>
+            <input type="text" id="student-category-input" class="form-control" placeholder="Örn: Geleneksel Türk Okçuluğu, Kemankeş Adayı, İleri Seviye">
+          </div>
+
+          <div class="form-group" style="background: rgba(56, 189, 248, 0.06); padding: 0.85rem; border-radius: var(--radius-md); border: 1px dashed rgba(56, 189, 248, 0.35);">
+            <label class="form-label" style="color: #38bdf8; display: flex; align-items: center; justify-content: space-between;">
+              <span>⏰ Antrenman Seansı / Grubu</span>
+              <span style="font-size: 0.78rem; opacity: 0.85; font-weight: normal;">(Formda seçtiği saat)</span>
+            </label>
+            <select id="student-session-select" class="form-control" onchange="StudentsManager.handleSessionSelectChange(this)">
+              <!-- Dinamik doldurulacak -->
+            </select>
+            <input type="text" id="student-session-custom-input" class="form-control" placeholder="Örn: Hafta Sonu 14:00 - 16:00" style="display: none; margin-top: 0.5rem;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Telefon Numarası</label>
+            <input type="tel" id="student-phone-input" class="form-control" placeholder="0555 123 4567">
+          </div>
+
+          <div class="form-group" style="background: rgba(212, 163, 115, 0.08); padding: 0.85rem; border-radius: var(--radius-md); border: 1px dashed rgba(212, 163, 115, 0.4);">
+            <label class="form-label" style="color: var(--gold); display: flex; align-items: center; justify-content: space-between;">
+              <span>⚜️ Kulüp Görevi / Yönetim Kurulu Unvanı</span>
+              <span style="font-size: 0.78rem; opacity: 0.85; font-weight: normal;">(Yönetimde ise seçin)</span>
+            </label>
+            <select id="student-role-select" class="form-control" onchange="StudentsManager.handleRoleSelectChange(this)">
+              <option value="">Kulüp Sporcusu / Üyesi (Standart)</option>
+              <option value="Kulüp Başkanı">👑 Kulüp Başkanı</option>
+              <option value="Başkan Yardımcısı">⚜️ Başkan Yardımcısı</option>
+              <option value="Genel Sekreter">📜 Genel Sekreter</option>
+              <option value="Sayman / Muhasip">💰 Sayman / Muhasip</option>
+              <option value="Yönetim Kurulu Üyesi">⚜️ Yönetim Kurulu Üyesi</option>
+              <option value="Denetleme Kurulu Başkanı">⚖️ Denetleme Kurulu Başkanı</option>
+              <option value="Denetleme Kurulu Üyesi">⚖️ Denetleme Kurulu Üyesi</option>
+              <option value="Takım Kaptanı">🏹 Takım Kaptanı / Baş Kemankeş</option>
+              <option value="Antrenör / Eğitmen">🎯 Antrenör / Eğitmen</option>
+              <option value="CUSTOM">✏️ Özel Görev / Unvan Yaz...</option>
+            </select>
+            <input type="text" id="student-role-custom-input" class="form-control" placeholder="Örn: Medya ve İletişim Sorumlusu" style="display: none; margin-top: 0.5rem;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Ekipman Notu (Yay Çekişi, Zihgir vb.)</label>
+            <input type="text" id="student-notes-input" class="form-control" placeholder="Örn: 35 lb Kepaze, Tirkeş mevcut">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="StudentsManager.closeModal()">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DİJİTAL SPORCU QR KİMLİK KARTI (KTÜ GTOK) -->
+  <div class="modal-backdrop" id="qr-card-modal">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">KTÜ GTOK Dijital Okçu Kartı</h3>
+        <button class="btn btn-secondary btn-icon-only" onclick="StudentsManager.closeQRCardModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="id-card-preview-wrapper">
+          <div class="archery-id-card" id="printable-id-card">
+            <div class="id-card-watermark">🏹</div>
+            <div class="id-card-header">
+              <div class="id-card-club-name">KARADENİZ TEKNİK ÜNİVERSİTESİ</div>
+              <div class="id-card-sub" style="color: var(--gold); font-weight: bold; margin-top: 2px;">
+                GELENEKSEL TÜRK OKÇULUK KULÜBÜ (KTÜ GTOK)
+              </div>
+            </div>
+
+            <!-- VIP Yönetim Kurulu Rozeti -->
+            <div id="idcard-role-banner" class="id-card-role-banner" style="display: none;">
+              ⚜️ YÖNETİM KURULU • KULÜP BAŞKANI
+            </div>
+
+            <!-- Yüksek Kontrastlı QR Kodu -->
+            <div class="id-card-qr-container" id="idcard-qrcode"></div>
+
+            <div class="id-card-name" id="idcard-name">Sporcu Adı</div>
+            <div class="id-card-meta">
+              <span id="idcard-number" style="font-weight: bold; color: var(--gold);">OKÇU NO: 0001</span>
+            </div>
+            <div id="idcard-faculty-dept" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.5rem;">
+              Mühendislik Fakültesi • Bilgisayar Müh.
+            </div>
+            <span class="badge-category" id="idcard-category" style="margin-bottom: 0.75rem;">Okçu</span>
+
+            <div class="id-card-footer">
+              KTÜ Geleneksel Türk Okçuluk Kulübü • Dijital Yoklama Kartı
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button class="btn btn-secondary" onclick="StudentsManager.closeQRCardModal()">Kapat</button>
+        <button class="btn btn-primary" onclick="StudentsManager.downloadCardImage()">
+          <span>📲 Kartı Resim (PNG) İndir</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR BAŞARI / POPUP BİLDİRİMİ -->
+  <div class="checkin-popup" id="checkin-popup">
+    <div class="checkin-popup-icon" id="popup-icon">🎯</div>
+    <div class="checkin-popup-text">
+      <h3 id="popup-student-name">Alperen Kılıç</h3>
+      <p id="popup-message">Giriş Saati: 14:32 • Yoklama Alındı</p>
+    </div>
+  </div>
+
+  <!-- MODAL: YENİ SEANS OLUŞTUR -->
+  <div class="modal-backdrop" id="session-create-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+          <span>⏰</span> Yeni Antrenman Seansı / Grubu Ekle
+        </h3>
+        <button class="btn btn-secondary btn-icon-only" onclick="SessionManager.closeCreateModal()">✕</button>
+      </div>
+      <form id="session-create-form" onsubmit="SessionManager.handleSaveNewSession(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Grup / Seans Adı *</label>
+            <input type="text" id="session-name-input" class="form-control" required placeholder="Örn: 1. Grup, Hafta Sonu A Grubu">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Antrenman Günü / Tarihi (İsteğe Bağlı)</label>
+            <input type="text" id="session-date-input" class="form-control" placeholder="Örn: Pazartesi - Çarşamba veya 2026-10-10">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Başlangıç Saati *</label>
+              <input type="time" id="session-start-input" class="form-control" required value="17:00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bitiş Saati *</label>
+              <input type="time" id="session-end-input" class="form-control" required value="18:00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Maksimum Kontenjan / Notlar</label>
+            <input type="text" id="session-notes-input" class="form-control" placeholder="Örn: Kontenjan 30 Okçu, Salon 2">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="SessionManager.closeCreateModal()">İptal</button>
+          <button type="submit" class="btn btn-primary">
+            <span>💾 Seansı Kaydet</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SEANS ÖĞRENCİ LİSTESİ & AYRI DERS YOKLAMASI (BASINCA AÇILAN LİSTE) -->
+  <div class="modal-backdrop" id="session-detail-modal">
+    <div class="modal-box modal-box-large">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;" id="session-detail-title">
+            <span>🏹</span> 1. Seans (17:00 - 18:00)
+          </h3>
+          <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 2px;" id="session-detail-subtitle">
+            Toplam: 24 Sporcu • 18 Geldi • 6 Bekleniyor
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-icon-only" onclick="SessionManager.closeDetailModal()">✕</button>
+      </div>
+
+      <div class="modal-body" style="max-height: 70vh;">
+        <!-- Seans Eylemleri Araç Çubuğu -->
+        <div style="display: flex; gap: 0.65rem; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btn-session-start-qr" onclick="SessionManager.startQRForThisSession()" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">
+              <span>🎯 Bu Seans İçin QR Yoklamayı Başlat</span>
+            </button>
+            <button class="btn btn-secondary" onclick="SessionManager.exportThisSessionExcel()" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">
+              <span>📊 Bu Seansın Yoklamasını Excel İndir</span>
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('session-specific-excel-input').click()" style="font-size: 0.85rem; padding: 0.45rem 0.85rem;">
+              <span>📥 Bu Seansa Excel ile Sporcu Ekle</span>
+            </button>
+            <input type="file" id="session-specific-excel-input" accept=".xlsx, .xls, .csv" style="display: none;" onchange="SessionManager.handleSessionSpecificExcelUpload(this)">
+          </div>
+
+          <div>
+            <button class="btn btn-danger btn-icon-only" onclick="SessionManager.deleteCurrentDetailSession()" title="Bu Seansı Sil">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <!-- Seans Öğrenci Tablosu -->
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-color); color: var(--gold); text-align: left;">
+                <th style="padding: 0.6rem 0.75rem;">Okçu No</th>
+                <th style="padding: 0.6rem 0.75rem;">Adı Soyadı</th>
+                <th style="padding: 0.6rem 0.75rem;">Fakülte / Bölüm</th>
+                <th style="padding: 0.6rem 0.75rem;">Bugünkü Durum</th>
+                <th style="padding: 0.6rem 0.75rem; text-align: right;">Hızlı Yoklama & İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="session-detail-students-tbody">
+              <!-- Dinamik doldurulacak -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <span style="font-size: 0.82rem; color: #94a3b8;">* Öğrencilere tek tıkla 'Geldi' veya 'Gelmedi' yazabilirsiniz.</span>
+        <button class="btn btn-secondary" onclick="SessionManager.closeDetailModal()">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FARKLI SEANS UYARISI & AKILLI GEÇİŞ (MISMATCH RESOLUTION) -->
+  <div class="modal-backdrop" id="session-mismatch-modal">
+    <div class="modal-box">
+      <div class="modal-header" style="background: rgba(251, 191, 36, 0.08); border-bottom: 1px solid rgba(251, 191, 36, 0.2);">
+        <h3 style="display: flex; align-items: center; gap: 0.6rem; color: #fbbf24; font-size: 1.15rem;">
+          <span>⚠️</span>
+          <span>Farklı Antrenman Seansı Algılandı</span>
+        </h3>
+        <button class="btn btn-secondary btn-icon-only" onclick="SessionManager.resolveMismatch('CANCEL')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+          <div style="font-size: 1.15rem; font-weight: 700; color: #fff;" id="mismatch-student-name">Sporcu Adı</div>
+          <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 2px;">Sicil No: <span id="mismatch-student-no" style="color: var(--gold); font-weight: 600;">0001</span></div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+          <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 0.85rem;">
+            <div style="font-size: 0.75rem; color: #f87171; text-transform: uppercase; font-weight: 600;">Kayıtlı Olduğu Grup</div>
+            <div id="mismatch-registered-session" style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 4px;">17:00 - 18:00</div>
+          </div>
+          <div style="background: rgba(74, 222, 128, 0.1); border: 1px solid rgba(74, 222, 128, 0.3); border-radius: var(--radius-md); padding: 0.85rem;">
+            <div style="font-size: 0.75rem; color: #4ade80; text-transform: uppercase; font-weight: 600;">Şu Anki Canlı Seans</div>
+            <div id="mismatch-current-session" style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-top: 4px;">18:00 - 19:00</div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 0.5rem;">
+          Bu okçu farklı bir antrenman saatine okuttu. Nasıl işlem yapmak istersiniz?
+        </p>
+      </div>
+      <div class="modal-footer" style="flex-direction: column; gap: 0.5rem;">
+        <button class="btn btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #0284c7, #38bdf8);" onclick="SessionManager.resolveMismatch('PERMANENT')">
+          <span>🔄 Kalıcı Olarak Bu Seansa Aktar & Yoklama Al</span>
+        </button>
+        <button class="btn btn-secondary" style="width: 100%; justify-content: center; border-color: rgba(74, 222, 128, 0.5); color: #4ade80;" onclick="SessionManager.resolveMismatch('MAKEUP')">
+          <span>🎯 Sadece Bugünlük Telafi Olarak Yaz</span>
+        </button>
+        <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="SessionManager.resolveMismatch('CANCEL')">
+          <span>❌ İptal Et (Giriş Yapma)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DUYURU EKLE / DÜZENLE (YALNIZCA YETKİLİ PANELİ) -->
+  <div class="modal-backdrop" id="admin-announcement-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="admin-ann-modal-title" style="font-size: 1.15rem; font-weight: 700; color: #fff;">Yeni Web Duyurusu Ekle</h3>
+        <button class="btn btn-secondary btn-icon-only" onclick="AnnouncementsAdmin.closeModal()">✕</button>
+      </div>
+      <form id="admin-ann-form" onsubmit="AnnouncementsAdmin.handleSave(event)">
+        <input type="hidden" id="admin-ann-id" value="">
+        <div class="modal-body">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Duyuru Türü / Etiket *</label>
+              <select id="admin-ann-tag" class="form-control" required>
+                <option value="Önemli">Önemli</option>
+                <option value="Antrenman">Antrenman</option>
+                <option value="Turnuva">Turnuva & Yarışma</option>
+                <option value="Duyuru">Genel Duyuru</option>
+                <option value="Kayıt">Kayıt & Başvuru</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tarih *</label>
+              <input type="text" id="admin-ann-date" class="form-control" required placeholder="Örn: 24 Ekim 2026">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Duyuru Başlığı *</label>
+            <input type="text" id="admin-ann-title" class="form-control" required placeholder="Örn: 2026 Bahar Dönemi Okçuluk Talimleri Başladı">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kısa Özet *</label>
+            <input type="text" id="admin-ann-desc" class="form-control" required placeholder="Örn: Haftalık antrenman programı Hasan Polat Spor Salonunda yürütülmektedir.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Detaylı Açıklama / İçerik</label>
+            <textarea id="admin-ann-detail" class="form-control" rows="4" placeholder="Duyuru ile ilgili tüm detaylar..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="AnnouncementsAdmin.closeModal()">İptal</button>
+          <button type="submit" class="btn btn-primary">Kaydet ve Web Sitesine Gönder</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Supabase Kütüphanesi ve Entegrasyon Modülü -->
+  <script src="lib/supabase.js"></script>
+  <script>
+    if (typeof window.supabase === 'undefined' && typeof supabase !== 'undefined') {
+      window.supabase = supabase;
+    }
+  </script>
+  <script src="js/supabase-config.js?v=20261023_v13"></script>
+
+  <!-- Uygulama Scriptleri -->
+  <script src="js/students-data.js?v=20261023_v13"></script>
+  <script src="js/audio.js?v=20261023_v13"></script>
+  <script src="js/storage.js?v=20261023_v13"></script>
+  <script src="js/sessions.js?v=20261023_v13"></script>
+  <script src="js/students.js?v=20261023_v13"></script>
+  <script src="js/attendance.js?v=20261023_v13"></script>
+  <script src="js/scanner.js?v=20261023_v13"></script>
+  <script src="js/history.js?v=20261023_v13"></script>
+  <script src="js/excel.js?v=20261023_v13"></script>
+  <script src="js/app.js?v=20261023_v13"></script>
+</body>
+</html>

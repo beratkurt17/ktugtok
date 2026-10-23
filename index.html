@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTÜ GTOK - Karadeniz Teknik Üniversitesi Geleneksel Türk Okçuluk Kulübü</title>
+  <meta name="description" content="Karadeniz Teknik Üniversitesi Geleneksel Türk Okçuluk Kulübü (KTÜ GTOK) resmi web portalı. Antrenman saatleri, duyurular, dijital medya arşivi, üyelik ve yönetim kurulu.">
+  <link rel="icon" type="image/jpeg" href="public/logo.jpg">
+  
+  <!-- Fontlar -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Mobilde sayfanın en alttan başlamasını engelleyen başlatıcı -->
+  <script>
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    if (window.location.hash && window.location.hash !== '#hero') {
+      try { history.replaceState(null, document.title, window.location.pathname + window.location.search); } catch(_) {}
+    }
+    window.scrollTo(0, 0);
+  </script>
+
+  <!-- Kulüp Web Sitesi Stili -->
+  <link rel="stylesheet" href="css/website.css?v=20261023_v13">
+</head>
+<body>
+
+  <!-- 1. ÜST NAVİGASYON (HEADER) -->
+  <header class="gtok-header">
+    <div class="gtok-container gtok-nav-wrapper">
+      
+      <!-- Kulüp Resmi Arması ve İsim -->
+      <a href="#hero" class="gtok-brand">
+        <img src="public/logo.jpg" alt="KTÜ GTOK Kulüp Arması" class="gtok-brand-logo">
+        <div class="gtok-brand-text">
+          <span class="gtok-brand-title">KTÜ GTOK</span>
+          <span class="gtok-brand-subtitle">Geleneksel Türk Okçuluk Kulübü</span>
+        </div>
+      </a>
+
+      <!-- Menü Linkleri -->
+      <nav aria-label="Ana Menü">
+        <ul class="gtok-nav-links">
+          <li><a href="#hero" class="gtok-nav-link active">Ana Sayfa</a></li>
+          <li><a href="#antrenmanlar" class="gtok-nav-link">Antrenmanlar</a></li>
+          <li><a href="#duyurular" class="gtok-nav-link">Duyurular</a></li>
+          <li><a href="#arsiv" class="gtok-nav-link">Fotoğraf Arşivi</a></li>
+          <li><a href="#yonetim" class="gtok-nav-link">Yönetim Kurulu</a></li>
+          <li><a href="#uyelik" class="gtok-nav-link">Kulübe Katıl</a></li>
+          <li><a href="oyun.html" class="gtok-nav-link" title="Okçuluk Mini Oyunu">🎯 Oyun</a></li>
+        </ul>
+      </nav>
+
+      <!-- Aksiyon Butonları -->
+      <div class="gtok-nav-actions">
+        <!-- YÖNETİCİ GİRİŞİ (Admin olmayan göremez / erişemez) -->
+        <button onclick="openAdminLoginModal()" class="btn-yoklama" title="Antrenör & Yetkili Girişi" id="btn-admin-login-nav">
+          <span>🔐</span>
+          <span>Yönetici Girişi</span>
+        </button>
+        <!-- QR YOKLAMA — sadece giriş yapılınca görünür -->
+        <a href="yoklama.html" class="btn-yoklama" title="Antrenör & Sporcu Yoklama Portalı" id="btn-qr-yoklama-nav" style="display:none;">
+          <span class="live-indicator"></span>
+          <span>QR Yoklama</span>
+        </a>
+        <a href="#uyelik" class="btn-ktu-mobile">
+          KTÜ Mobil ile Katıl
+        </a>
+      </div>
+
+      <!-- Mobil Menü Butonu -->
+      <button class="gtok-mobile-toggle" id="gtok-mobile-toggle" aria-label="Menüyü Aç" onclick="toggleMobileMenu()">
+        ☰
+      </button>
+    </div>
+
+    <!-- Mobil Menü Çekmecesi (Burger Menü) -->
+    <div class="gtok-mobile-drawer" id="gtok-mobile-drawer">
+      <div class="gtok-drawer-header">
+        <span class="gtok-drawer-title">KTÜ GTOK Menü</span>
+        <button class="gtok-drawer-close" onclick="closeMobileMenu()" aria-label="Kapat">✕</button>
+      </div>
+      <nav class="gtok-drawer-nav">
+        <a href="#hero" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🏠</span> Ana Sayfa
+        </a>
+        <a href="#antrenmanlar" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🎯</span> Antrenman Saatleri
+        </a>
+        <a href="#duyurular" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">📢</span> Kulüp Duyuruları
+        </a>
+        <a href="#arsiv" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🖼️</span> Dijital Fotoğraf Arşivi
+        </a>
+        <a href="#yonetim" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">⚜️</span> Yönetim Kurulu
+        </a>
+        <a href="javascript:void(0)" onclick="closeMobileMenu(); openAthleteQrModal();" class="gtok-drawer-link gtok-drawer-highlight">
+          <span class="drawer-icon">📲</span> <strong>Sporcu QR Kartımı Sorgula</strong>
+        </a>
+        <a href="#uyelik" class="gtok-drawer-link" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🏹</span> KTÜ Mobil ile Kulübe Katıl
+        </a>
+        <a href="oyun.html" class="gtok-drawer-link gtok-drawer-highlight" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🎯</span> <strong>Okçuluk Oyunu Oyna</strong>
+        </a>
+        <!-- Yönetici Girişi — her zaman görünür ama QR linki sadece giriş sonrası -->
+        <a href="javascript:void(0)" onclick="closeMobileMenu(); openAdminLoginModal();" class="gtok-drawer-link" id="drawer-admin-login-link">
+          <span class="drawer-icon">🔐</span> Yönetici Girişi
+        </a>
+        <a href="yoklama.html" class="gtok-drawer-link gtok-drawer-admin" id="drawer-qr-yoklama-link" style="display:none;" onclick="closeMobileMenu()">
+          <span class="drawer-icon">🔒</span> Yetkili QR Yoklama Portalı
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- 2. HERO (GİRİŞ) BÖLÜMÜ -->
+    <section class="gtok-hero" id="hero">
+      <div class="gtok-container">
+        <div class="gtok-hero-grid">
+          
+          <div>
+            <div class="gtok-hero-badge">
+              Karadeniz Teknik Üniversitesi • Öğrenci Kulübü
+            </div>
+            <h1 class="gtok-hero-title">
+              Geleneksel Türk Okçuluk Kulübü
+            </h1>
+            <p class="gtok-hero-desc">
+              Karadeniz Teknik Üniversitesi bünyesinde geleneksel okçuluk sporunu ve kültürünü yaşatan resmi öğrenci kulübüdür. Haftalık antrenman, üniversiteler arası turnuvalar ve sporcu gelişim faaliyetleri yürütülmektedir.
+            </p>
+
+            <div class="gtok-hero-buttons">
+              <!-- Sporcu QR Kimlik Kartı Erişimi -->
+              <button onclick="openAthleteQrModal()" class="btn-primary" style="cursor:pointer; border:none;">
+                <span>🪪</span> Sporcu QR Kodumu Al
+              </button>
+              <a href="#antrenmanlar" class="btn-secondary">
+                Antrenman Saatleri
+              </a>
+              <a href="#uyelik" class="btn-secondary">
+                KTÜ Mobil ile Üye Ol
+              </a>
+              <a href="oyun.html" class="btn-secondary" style="border-color: var(--gtok-gold); color: var(--gtok-gold);">
+                🎯 Oyun Oyna
+              </a>
+            </div>
+          </div>
+
+          <!-- Sağ Taraf: Resmi Kulüp Arması -->
+          <div class="hero-logo-card">
+            <img src="public/logo.jpg" alt="KTÜ Geleneksel Türk Okçuluk Kulübü Logosu" class="hero-emblem-img">
+            <h3 class="hero-card-title">KTÜ GTOK</h3>
+            <p class="hero-card-meta">Resmi Kulüp Portalı & Sporcu Sistemi</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ANTRENMAN GÜN VE SAATLERİ -->
+    <section class="gtok-section" id="antrenmanlar">
+      <div class="gtok-container">
+        
+        <div class="section-head" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div class="section-eyebrow">Program</div>
+            <h2 class="section-heading">Antrenman Gün ve Saatleri</h2>
+            <p class="section-subtext">
+              Antrenmanlar Hasan Polat Spor Salonunda gerçekleştirilmektedir.
+            </p>
+          </div>
+          <!-- Admin araçları — sadece yöneticilere görünür (website.js admin kontrolü ile açılır) -->
+          <div id="schedule-admin-toolbar" style="display:none; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+            <button onclick="requestAdminScheduleEdit()" class="btn-manage-schedule" style="cursor:pointer;" title="Antrenman Gün ve Saatlerini Düzenle">
+              ⚙️ Saatleri Düzenle
+            </button>
+          </div>
+        </div>
+
+        <!-- Dinamik Antrenman Seansları (website.js tarafından yönetilir) -->
+        <div class="training-grid" id="training-schedule-container">
+          <!-- Dinamik doldurulur -->
+        </div>
+
+        <div class="training-notice-box">
+          <div class="training-notice-text">
+            <strong>Malzeme Bilgisi:</strong> Antrenmanlarda yay, ok ve koruyucu ekipmanlar kulüp tarafından sağlanmaktadır. Katılımcıların spor kıyafeti ve temiz tabanlı spor ayakkabı getirmesi yeterlidir.
+          </div>
+          <div>
+            <button onclick="openAthleteQrModal()" class="btn-yoklama" style="cursor:pointer; border:none;">
+              <span class="live-indicator"></span> Sporcu QR Kartımı Sorgula
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 4. DUYURULAR -->
+    <section class="gtok-section" id="duyurular">
+      <div class="gtok-container">
+        
+        <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <div class="section-eyebrow">Bilgilendirme</div>
+            <h2 class="section-heading">Kulüp Duyuruları</h2>
+            <p class="section-subtext">
+              Kayıt dönemleri, antrenman takvimleri ve yarışma süreçleriyle ilgili resmi duyurular.
+            </p>
+          </div>
+          <!-- Duyuru admin araçları — sadece yöneticiye görünür -->
+          <div id="announcements-admin-toolbar" style="display:none;">
+            <button onclick="openAnnouncementEditModal()" class="btn-manage-schedule" style="cursor:pointer;" title="Yeni Duyuru Ekle">
+              📢 Duyuru Ekle
+            </button>
+          </div>
+        </div>
+
+        <!-- Dinamik Duyurular Listesi (website.js tarafından yönetilir) -->
+        <div class="announcements-list" id="announcements-container">
+          <!-- Dinamik doldurulur -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. DİJİTAL ARŞİV & FOTOĞRAF YÖNETİMİ -->
+    <section class="gtok-section" id="arsiv">
+      <div class="gtok-container">
+        
+        <div class="section-head" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <div class="section-eyebrow">Medya</div>
+            <h2 class="section-heading">Dijital Fotoğraf Arşivi</h2>
+            <p class="section-subtext">
+              Kulübümüzün antrenman, turnuva ve etkinlik fotoğrafları.
+            </p>
+          </div>
+          <!-- Fotoğraf admin araçları — sadece yöneticiye görünür -->
+          <div id="archive-admin-toolbar" style="display:none;">
+            <button onclick="openUploadModal()" class="btn-manage-schedule" style="cursor:pointer;" title="Yeni Fotoğraf Ekle">
+              📷 Fotoğraf Ekle
+            </button>
+          </div>
+        </div>
+
+        <!-- Arşiv Araç Çubuğu (Filtreler) -->
+        <div class="archive-toolbar">
+          <div class="archive-filter-tabs">
+            <button class="archive-tab-btn active" data-category="all">Tüm Fotoğraflar</button>
+            <button class="archive-tab-btn" data-category="training">Antrenmanlar</button>
+            <button class="archive-tab-btn" data-category="tournament">Turnuvalar</button>
+            <button class="archive-tab-btn" data-category="event">Etkinlikler</button>
+          </div>
+        </div>
+
+        <!-- Fotoğraf Grid Container (JS tarafından render edilir) -->
+        <div class="archive-media-grid" id="archive-grid-container">
+          <!-- Dinamik doldurulur -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 6. KULÜBE KATIL / KTÜ MOBİL YÖNLENDİRME -->
+    <section class="gtok-section" id="uyelik">
+      <div class="gtok-container">
+        
+        <div class="ktu-apply-box">
+          <div>
+            <div class="section-eyebrow">Resmi Kayıt</div>
+            <h2 class="ktu-apply-title">KTÜ Mobil ile Kulübe Katılın</h2>
+            <p class="ktu-apply-desc">
+              Üniversitemiz mevzuatı gereği öğrenci kulübü üyelikleri doğrudan <strong>KTÜ Mobil</strong> uygulaması üzerinden resmi olarak alınmaktadır.
+            </p>
+
+            <ul class="ktu-steps-list">
+              <li class="ktu-step-row">
+                <div class="ktu-step-num">1</div>
+                <div class="ktu-step-info">
+                  <strong>KTÜ Mobil Uygulamasını Açın</strong>
+                  <span>Telefonunuzda yüklü olan KTÜ Mobil uygulamasına öğrenci hesabınızla giriş yapın.</span>
+                </div>
+              </li>
+              <li class="ktu-step-row">
+                <div class="ktu-step-num">2</div>
+                <div class="ktu-step-info">
+                  <strong>Öğrenci Kulüpleri Modülüne Gidin</strong>
+                  <span>Menüden 'Öğrenci Kulüpleri' listesini açarak 'Geleneksel Türk Okçuluk Kulübü'nü seçin.</span>
+                </div>
+              </li>
+              <li class="ktu-step-row">
+                <div class="ktu-step-num">3</div>
+                <div class="ktu-step-info">
+                  <strong>Üyelik Başvurusunu Tamamlayın</strong>
+                  <span>Başvurunuz kulüp yönetimimizce onaylandıktan sonra antrenmanlara katılabilirsiniz.</span>
+                </div>
+              </li>
+            </ul>
+
+            <div class="ktu-apply-actions">
+              <a href="https://instagram.com/ktuokculuk" target="_blank" rel="noopener" class="btn-insta-follow">
+                Instagram'da Takip Et — @ktuokculuk ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- Sağ Taraf: Mobil Uygulama Bilgi Kartı -->
+          <div class="ktu-mobile-badge-card">
+            <div class="ktu-app-icon">KTÜ</div>
+            <h4 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">KTÜ Mobil</h4>
+            <p style="font-size: 0.82rem; color: var(--gtok-text-muted);">
+              Karadeniz Teknik Üniversitesi Resmi Mobil Uygulaması
+            </p>
+            <div class="ktu-app-stores">
+              <a href="https://apps.apple.com/tr/app/kt%C3%BC-mobil/id1454522437" target="_blank" rel="noopener" class="store-link">
+                 App Store'dan İndir
+              </a>
+              <a href="https://play.google.com/store/apps/details?id=tr.edu.ktu.mobil" target="_blank" rel="noopener" class="store-link">
+                ▶ Google Play'den İndir
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 7. YÖNETİM KURULUMUZ -->
+    <section class="gtok-section" id="yonetim">
+      <div class="gtok-container">
+        
+        <div class="section-head">
+          <div>
+            <div class="section-eyebrow">Yönetim</div>
+            <h2 class="section-heading">Yönetim Kurulumuz</h2>
+            <p class="section-subtext">
+              2026-2027 Dönemi Kulüp Yönetim ve Denetim Kurulu.
+            </p>
+          </div>
+        </div>
+
+        <div class="board-grid" id="board-members-grid">
+          <!-- QR Yoklama Sisteminden Dinamik Olarak Yüklenir -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 8. INSTAGRAM BÖLÜMÜ -->
+    <section class="gtok-section" id="instagram">
+      <div class="gtok-container">
+        
+        <div class="insta-box">
+          <div class="insta-info">
+            <img src="public/logo.jpg" alt="Instagram Profil" class="insta-avatar">
+            <div>
+              <div class="insta-handle">@ktugtok</div>
+              <div class="insta-sub">KTÜ Geleneksel Türk Okçuluk Kulübü Resmi Instagram Hesabı</div>
+            </div>
+          </div>
+          <div>
+            <a href="https://instagram.com/ktugtok" target="_blank" rel="noopener" class="btn-insta-follow">
+              Instagram'da Takip Et ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- 9. YOKLAMA SİSTEMİ ÇAĞRI MODÜLÜ -->
+        <div class="yoklama-callout">
+          <div class="yoklama-callout-text">
+            <h3>🎯 Kulüp İçi Yoklama & Sporcu Takip Sistemi</h3>
+            <p>
+              Antrenörler ve yöneticiler için geliştirilen QR kodlu sporcu yoklama sistemi, seans yönetimi ve Excel raporlama motoru sitemiz içerisinde çalışmaktadır.
+            </p>
+          </div>
+          <div>
+            <a href="yoklama.html" class="btn-launch-yoklama">
+              Yoklama Sistemini Başlat →
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- 10. FOOTER -->
+  <footer class="gtok-footer">
+    <div class="gtok-container">
+      
+      <div class="footer-row">
+        <div class="gtok-brand">
+          <img src="public/logo.jpg" alt="KTÜ GTOK Logo" class="gtok-brand-logo" style="width: 40px; height: 40px;">
+          <div>
+            <div class="gtok-brand-title" style="font-size: 1.1rem;">KTÜ GTOK</div>
+            <div class="gtok-brand-subtitle">Karadeniz Teknik Üniversitesi</div>
+          </div>
+        </div>
+
+        <ul class="footer-links">
+          <li><a href="#hero">Ana Sayfa</a></li>
+          <li><a href="#antrenmanlar">Antrenmanlar</a></li>
+          <li><a href="#duyurular">Duyurular</a></li>
+          <li><a href="#arsiv">Arşiv</a></li>
+          <li><a href="#yonetim">Yönetim Kurulu</a></li>
+          <li><a href="yoklama.html" style="color: var(--gtok-text-dim); font-size: 0.82rem;" title="Yalnızca Yetkili Antrenörler">🔐 Antrenör Girişi</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 Karadeniz Teknik Üniversitesi Geleneksel Türk Okçuluk Kulübü.
+        </div>
+        <div>
+          Hasan Polat Spor Salonu • Ortahisar / Trabzon
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- 11. GENEL MODAL (FOTOĞRAF YÜKLEME & DETAYLAR) -->
+  <div class="gtok-modal-backdrop" id="gtok-modal">
+    <div class="gtok-modal-box">
+      <button class="gtok-modal-close" id="gtok-modal-close" aria-label="Kapat">✕</button>
+      <div id="gtok-modal-content">
+        <!-- Dinamik İçerik -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase Bulut Veritabanı Kütüphanesi & Yapılandırması -->
+  <script src="lib/supabase.js"></script>
+  <script>
+    if (typeof window.supabase === 'undefined' && typeof supabase !== 'undefined') {
+      window.supabase = supabase;
+    }
+  </script>
+  <script src="js/supabase-config.js?v=20261023_v13"></script>
+
+  <!-- Yerel QR Kütüphanesi & Resmi Sporcu Veri Havuzu -->
+  <script src="lib/qrcode.min.js?v=20261023_v13"></script>
+  <script src="js/students-data.js?v=20261023_v13"></script>
+
+  <!-- Kulüp Web Sitesi JS -->
+  <script src="js/website.js?v=20261023_v13"></script>
+</body>
+</html>

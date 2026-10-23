@@ -1,0 +1,1428 @@
+/* ==========================================================================
+   KTÜ GTOK - KULÜP RESMİ WEB SİTESİ TASARIM SİSTEMİ (website.css)
+   Profesyonel, Sade ve Kurumsal Tasarım - KTÜ GTOK Resmi Logo Paleti
+   ========================================================================== */
+
+:root {
+  /* Logo Renk Paleti (Mat Antrasit & Sıcak Keten Krem) */
+  --gtok-bg: #0c0e14;
+  --gtok-surface: #131722;
+  --gtok-card: #181d2a;
+  --gtok-card-hover: #1f2536;
+  --gtok-card-subtle: #151924;
+
+  /* Resmi Arma Renkleri */
+  --gtok-cream: #e5d3bd;
+  --gtok-cream-light: #f4ecdf;
+  --gtok-cream-muted: #c9b49b;
+  --gtok-cream-border: rgba(229, 211, 189, 0.22);
+  --gtok-cream-surface: rgba(229, 211, 189, 0.08);
+
+  /* Kurumsal Vurgu & Durum Renkleri */
+  --gtok-bronze: #b89368;
+  --gtok-blue: #2563eb;
+  --gtok-green: #10b981;
+  --gtok-amber: #d97706;
+
+  /* Metin Renkleri */
+  --gtok-text-main: #f8fafc;
+  --gtok-text-muted: #94a3b8;
+  --gtok-text-dim: #64748b;
+
+  /* Çizgiler & Yarıçap */
+  --gtok-border: rgba(255, 255, 255, 0.09);
+  --gtok-border-hover: rgba(229, 211, 189, 0.4);
+  --gtok-radius-sm: 6px;
+  --gtok-radius-md: 10px;
+  --gtok-radius-lg: 16px;
+
+  --gtok-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --gtok-font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --gtok-transition: all 0.2s ease-in-out;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--gtok-font);
+  background-color: var(--gtok-bg);
+  color: var(--gtok-text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Container */
+.gtok-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* ==========================================================================
+   HEADER / NAVİGASYON
+   ========================================================================== */
+.gtok-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(12, 14, 20, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gtok-border);
+  transition: var(--gtok-transition);
+}
+.gtok-nav-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+}
+
+/* Brand / Logo */
+.gtok-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+.gtok-brand-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gtok-cream);
+  background: #111;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+.gtok-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+.gtok-brand-title {
+  font-family: var(--gtok-font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--gtok-cream-light);
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.gtok-brand-subtitle {
+  font-size: 0.76rem;
+  color: var(--gtok-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Menü Linkleri */
+.gtok-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.85rem;
+  list-style: none;
+}
+.gtok-nav-link {
+  color: var(--gtok-text-muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: var(--gtok-transition);
+  padding: 0.4rem 0;
+}
+.gtok-nav-link:hover, .gtok-nav-link.active {
+  color: var(--gtok-cream-light);
+}
+
+/* Aksiyon Butonları */
+.gtok-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.btn-yoklama {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gtok-cream);
+  color: #0c0e14 !important;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+  border: 1px solid var(--gtok-cream-light);
+}
+.btn-yoklama:hover {
+  background: var(--gtok-cream-light);
+  transform: translateY(-1px);
+}
+.btn-yoklama .live-indicator {
+  width: 7px;
+  height: 7px;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.btn-ktu-mobile {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--gtok-cream-light);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.55rem 1rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  border: 1px solid var(--gtok-cream-border);
+  transition: var(--gtok-transition);
+}
+.btn-ktu-mobile:hover {
+  background: var(--gtok-cream-surface);
+  border-color: var(--gtok-cream);
+}
+
+/* Mobil Menü Butonu */
+.gtok-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+/* Mobil Menü Çekmecesi - Masaüstünde Kesinlikle Gizli */
+@media (min-width: 769px) {
+  .gtok-mobile-drawer {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   HERO / GİRİŞ BÖLÜMÜ
+   ========================================================================== */
+.gtok-hero {
+  padding: 4.5rem 0 3.5rem;
+  border-bottom: 1px solid var(--gtok-border);
+  background: linear-gradient(180deg, rgba(19, 23, 34, 0.4) 0%, rgba(12, 14, 20, 0) 100%);
+}
+.gtok-hero-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  align-items: center;
+  gap: 3.5rem;
+}
+.gtok-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gtok-cream-surface);
+  color: var(--gtok-cream);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--gtok-radius-sm);
+  border: 1px solid var(--gtok-cream-border);
+  margin-bottom: 1.25rem;
+}
+.gtok-hero-title {
+  font-family: var(--gtok-font-display);
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin-bottom: 1.25rem;
+}
+.gtok-hero-title span {
+  color: var(--gtok-cream);
+}
+.gtok-hero-desc {
+  font-size: 1.1rem;
+  color: var(--gtok-text-muted);
+  line-height: 1.65;
+  margin-bottom: 2.25rem;
+  max-width: 580px;
+}
+.gtok-hero-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--gtok-cream);
+  color: #0c0e14;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.6rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+  border: 1px solid var(--gtok-cream-light);
+}
+.btn-primary:hover {
+  background: var(--gtok-cream-light);
+  transform: translateY(-2px);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--gtok-card);
+  color: var(--gtok-text-main);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  border: 1px solid var(--gtok-border);
+  transition: var(--gtok-transition);
+}
+.btn-secondary:hover {
+  background: var(--gtok-card-hover);
+  border-color: var(--gtok-cream-border);
+}
+
+/* Hero İstatistik Şeridi */
+.hero-quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--gtok-border);
+}
+.quick-stat-val {
+  font-family: var(--gtok-font-display);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--gtok-cream-light);
+}
+.quick-stat-label {
+  font-size: 0.82rem;
+  color: var(--gtok-text-dim);
+  font-weight: 500;
+}
+
+/* Hero Sağ Kart / Büyük Logo */
+.hero-logo-card {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-cream-border);
+  border-radius: var(--gtok-radius-lg);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.hero-emblem-img {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--gtok-cream);
+  margin: 0 auto 1.5rem;
+  display: block;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+.hero-card-title {
+  font-family: var(--gtok-font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.35rem;
+}
+.hero-card-meta {
+  font-size: 0.85rem;
+  color: var(--gtok-text-muted);
+}
+
+/* ==========================================================================
+   BÖLÜM YAPISI (SECTIONS)
+   ========================================================================== */
+.gtok-section {
+  padding: 5rem 0;
+  border-bottom: 1px solid var(--gtok-border);
+}
+.section-head {
+  margin-bottom: 3rem;
+}
+.section-eyebrow {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gtok-cream);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+}
+.section-heading {
+  font-family: var(--gtok-font-display);
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+.section-subtext {
+  font-size: 1rem;
+  color: var(--gtok-text-muted);
+  max-width: 620px;
+}
+
+/* ==========================================================================
+   1. ANTRENMAN GÜN VE SAATLERİ (SCHEDULE)
+   ========================================================================== */
+.training-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.training-card {
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  padding: 2rem;
+  transition: var(--gtok-transition);
+}
+.training-card:hover {
+  border-color: var(--gtok-cream-border);
+  transform: translateY(-2px);
+}
+.training-card.highlight {
+  border-color: var(--gtok-cream-border);
+  background: linear-gradient(180deg, #1b2130, #181d2a);
+}
+.training-day {
+  display: inline-block;
+  background: var(--gtok-cream-surface);
+  color: var(--gtok-cream);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--gtok-radius-sm);
+  margin-bottom: 1.25rem;
+}
+.training-time {
+  font-family: var(--gtok-font-display);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+.training-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gtok-cream-light);
+  margin-bottom: 1rem;
+}
+.training-list {
+  list-style: none;
+  margin-bottom: 1.5rem;
+}
+.training-list li {
+  font-size: 0.88rem;
+  color: var(--gtok-text-muted);
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.training-list li:last-child {
+  border-bottom: none;
+}
+.training-location {
+  font-size: 0.82rem;
+  color: var(--gtok-text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Antrenman Alt Bilgi Çubuğu */
+.training-notice-box {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  padding: 1.25rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+.training-notice-text {
+  font-size: 0.9rem;
+  color: var(--gtok-text-muted);
+}
+.training-notice-text strong {
+  color: #fff;
+}
+
+/* ==========================================================================
+   2. DUYURULAR (ANNOUNCEMENTS)
+   ========================================================================== */
+.announcements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.announcement-row {
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  transition: var(--gtok-transition);
+}
+.announcement-row:hover {
+  border-color: var(--gtok-cream-border);
+  background: var(--gtok-card-hover);
+}
+.ann-left {
+  flex: 1;
+}
+.ann-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.ann-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--gtok-radius-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gtok-cream);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.ann-tag.priority {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fbbf24;
+  border-color: rgba(217, 119, 6, 0.3);
+}
+.ann-row-date {
+  font-size: 0.8rem;
+  color: var(--gtok-text-dim);
+}
+.ann-row-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.35rem;
+}
+.ann-row-desc {
+  font-size: 0.9rem;
+  color: var(--gtok-text-muted);
+}
+.btn-ann-detail {
+  background: transparent;
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-cream-light);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--gtok-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--gtok-transition);
+}
+.btn-ann-detail:hover {
+  background: var(--gtok-cream);
+  color: #0c0e14;
+  border-color: var(--gtok-cream);
+}
+.ann-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.btn-ann-action {
+  background: transparent;
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-text-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--gtok-radius-sm);
+  cursor: pointer;
+  transition: var(--gtok-transition);
+}
+.btn-ann-action:hover {
+  color: var(--gtok-cream-light);
+  border-color: var(--gtok-cream-border);
+}
+.btn-ann-action.delete:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ==========================================================================
+   3. DİJİTAL ARŞİV & FOTOĞRAF YÜKLEME (MEDIA ARCHIVE & UPLOADER)
+   ========================================================================== */
+.archive-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.archive-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.archive-tab-btn {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: var(--gtok-radius-sm);
+  cursor: pointer;
+  transition: var(--gtok-transition);
+}
+.archive-tab-btn:hover, .archive-tab-btn.active {
+  background: var(--gtok-cream-surface);
+  color: var(--gtok-cream);
+  border-color: var(--gtok-cream-border);
+}
+.btn-upload-photo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gtok-cream);
+  color: #0c0e14;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.55rem 1.15rem;
+  border-radius: var(--gtok-radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: var(--gtok-transition);
+}
+.btn-upload-photo:hover {
+  background: var(--gtok-cream-light);
+}
+
+/* Arşiv Fotoğraf Grid */
+.archive-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.archive-photo-card {
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  overflow: hidden;
+  transition: var(--gtok-transition);
+  display: flex;
+  flex-direction: column;
+}
+.archive-photo-card:hover {
+  border-color: var(--gtok-cream-border);
+  transform: translateY(-2px);
+}
+.archive-photo-wrap {
+  height: 220px;
+  background: #11141c;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.archive-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.archive-photo-card:hover .archive-photo-img {
+  transform: scale(1.03);
+}
+.archive-photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--gtok-text-dim);
+}
+.archive-tag-overlay {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(12, 14, 20, 0.85);
+  backdrop-filter: blur(4px);
+  color: var(--gtok-cream);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--gtok-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.archive-photo-info {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+.archive-photo-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+.archive-photo-date {
+  font-size: 0.78rem;
+  color: var(--gtok-text-dim);
+  margin-bottom: 0.5rem;
+}
+.archive-photo-desc {
+  font-size: 0.85rem;
+  color: var(--gtok-text-muted);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+.archive-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--gtok-border);
+  padding-top: 0.75rem;
+  margin-top: auto;
+}
+.btn-view-photo {
+  background: transparent;
+  border: none;
+  color: var(--gtok-cream);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.btn-delete-photo {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   4. KTÜ MOBİL İLE ÜYELİK & KATILIM
+   ========================================================================== */
+.ktu-apply-box {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-cream-border);
+  border-radius: var(--gtok-radius-lg);
+  padding: 3rem;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: center;
+  gap: 3rem;
+}
+.ktu-apply-title {
+  font-family: var(--gtok-font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1rem;
+}
+.ktu-apply-desc {
+  font-size: 1rem;
+  color: var(--gtok-text-muted);
+  line-height: 1.65;
+  margin-bottom: 1.75rem;
+}
+.ktu-steps-list {
+  list-style: none;
+  margin-bottom: 2rem;
+}
+.ktu-step-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+.ktu-step-num {
+  width: 24px;
+  height: 24px;
+  background: var(--gtok-cream-surface);
+  border: 1px solid var(--gtok-cream-border);
+  color: var(--gtok-cream);
+  font-size: 0.78rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.ktu-step-info {
+  font-size: 0.92rem;
+  color: var(--gtok-text-main);
+}
+.ktu-step-info span {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--gtok-text-dim);
+}
+
+.ktu-apply-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.btn-ktu-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--gtok-cream);
+  color: #0c0e14;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 0.85rem 1.65rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+}
+.btn-ktu-portal:hover {
+  background: var(--gtok-cream-light);
+  transform: translateY(-2px);
+}
+.btn-wa-support {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(37, 211, 102, 0.12);
+  color: #25d366;
+  border: 1px solid rgba(37, 211, 102, 0.3);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+}
+.btn-wa-support:hover {
+  background: rgba(37, 211, 102, 0.2);
+}
+
+/* Sağ KTÜ Mobil Kartı */
+.ktu-mobile-badge-card {
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  padding: 2rem;
+  text-align: center;
+}
+.ktu-app-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e3a8a, #0c4a6e);
+  margin: 0 auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.ktu-app-stores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+.store-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-text-main);
+  padding: 0.65rem 1rem;
+  border-radius: var(--gtok-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--gtok-transition);
+}
+.store-link:hover {
+  border-color: var(--gtok-cream-border);
+  color: var(--gtok-cream);
+}
+
+/* ==========================================================================
+   5. YÖNETİM KURULUMUZ (EXECUTIVE BOARD)
+   ========================================================================== */
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+.board-card {
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-md);
+  padding: 2rem 1.75rem;
+  text-align: center;
+  transition: var(--gtok-transition);
+}
+.board-card:hover {
+  border-color: var(--gtok-cream-border);
+  transform: translateY(-2px);
+}
+.board-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1.25rem;
+  background: var(--gtok-surface);
+  border: 2px solid var(--gtok-cream);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--gtok-cream);
+  font-weight: 800;
+}
+.board-name {
+  font-family: var(--gtok-font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.25rem;
+}
+.board-role {
+  font-size: 0.85rem;
+  color: var(--gtok-cream);
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+.board-dept {
+  font-size: 0.8rem;
+  color: var(--gtok-text-dim);
+}
+
+/* ==========================================================================
+   6. INSTAGRAM VİTRİNİ
+   ========================================================================== */
+.insta-box {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-lg);
+  padding: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+.insta-info {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+.insta-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--gtok-cream);
+  object-fit: cover;
+}
+.insta-handle {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+.insta-sub {
+  font-size: 0.85rem;
+  color: var(--gtok-text-muted);
+}
+.btn-insta-follow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: var(--gtok-cream-light);
+  border: 1px solid var(--gtok-cream-border);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+}
+.btn-insta-follow:hover {
+  background: var(--gtok-cream-surface);
+  border-color: var(--gtok-cream);
+}
+
+/* ==========================================================================
+   7. YOKLAMA SİSTEMİ ÇAĞRI MODÜLÜ
+   ========================================================================== */
+.yoklama-callout {
+  background: linear-gradient(180deg, var(--gtok-surface) 0%, var(--gtok-card) 100%);
+  border: 1px solid var(--gtok-cream-border);
+  border-radius: var(--gtok-radius-lg);
+  padding: 3rem;
+  margin-top: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+}
+.yoklama-callout-text h3 {
+  font-family: var(--gtok-font-display);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+.yoklama-callout-text p {
+  font-size: 0.95rem;
+  color: var(--gtok-text-muted);
+  max-width: 580px;
+}
+.btn-launch-yoklama {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--gtok-cream);
+  color: #0c0e14 !important;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0.9rem 1.85rem;
+  border-radius: var(--gtok-radius-sm);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+  border: 1px solid var(--gtok-cream-light);
+}
+.btn-launch-yoklama:hover {
+  background: var(--gtok-cream-light);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.gtok-footer {
+  background: #090b0f;
+  border-top: 1px solid var(--gtok-border);
+  padding: 3.5rem 0 2rem;
+  color: var(--gtok-text-muted);
+  font-size: 0.88rem;
+}
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 1.5rem;
+}
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+.footer-links a {
+  color: var(--gtok-text-muted);
+  text-decoration: none;
+  transition: var(--gtok-transition);
+}
+.footer-links a:hover {
+  color: var(--gtok-cream);
+}
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--gtok-text-dim);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* ==========================================================================
+   MODAL (FOTOĞRAF YÜKLEME & DUYURU DETAY)
+   ========================================================================== */
+.gtok-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.gtok-modal-backdrop.open {
+  display: flex;
+}
+.gtok-modal-box {
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-cream-border);
+  border-radius: var(--gtok-radius-lg);
+  max-width: 560px;
+  width: 100%;
+  padding: 2.25rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.gtok-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-text-muted);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: var(--gtok-transition);
+}
+.gtok-modal-close:hover {
+  color: #fff;
+  border-color: var(--gtok-cream);
+}
+
+/* Form stilleri */
+.modal-form-group {
+  margin-bottom: 1.15rem;
+}
+.modal-form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gtok-text-main);
+  margin-bottom: 0.4rem;
+}
+.modal-form-input, .modal-form-select, .modal-form-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--gtok-card);
+  border: 1px solid var(--gtok-border);
+  border-radius: var(--gtok-radius-sm);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: var(--gtok-transition);
+}
+.modal-form-input:focus, .modal-form-select:focus, .modal-form-textarea:focus {
+  outline: none;
+  border-color: var(--gtok-cream);
+  background: #181d28;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .gtok-hero-grid, .ktu-apply-box {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .training-grid, .archive-media-grid, .board-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .gtok-nav-links, .btn-ktu-mobile {
+    display: none;
+  }
+  .gtok-mobile-toggle {
+    display: block;
+  }
+  .gtok-hero {
+    padding: 2.25rem 0 2rem;
+  }
+  .gtok-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+  .gtok-hero-badge {
+    margin: 0 auto 1rem;
+  }
+  .gtok-hero-title {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+  .gtok-hero-desc {
+    font-size: 0.95rem;
+    margin: 0 auto 1.5rem;
+    line-height: 1.6;
+  }
+  .gtok-hero-buttons {
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+  }
+  .hero-quick-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+  }
+  .quick-stat-val {
+    font-size: 1.4rem;
+  }
+  .quick-stat-label {
+    font-size: 0.75rem;
+  }
+  .hero-logo-card {
+    padding: 1.5rem 1rem;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .hero-emblem-img {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 1rem;
+  }
+  .hero-card-title {
+    font-size: 1.1rem;
+  }
+  .gtok-section {
+    padding: 3rem 0;
+  }
+  .section-head {
+    margin-bottom: 1.75rem;
+    text-align: center;
+  }
+  .section-heading {
+    font-size: 1.65rem;
+  }
+  .section-subtext {
+    margin: 0 auto;
+    font-size: 0.92rem;
+  }
+  .training-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .training-card {
+    padding: 1.35rem 1.15rem;
+  }
+  .training-time {
+    font-size: 1.25rem;
+  }
+  .training-title {
+    font-size: 1rem;
+  }
+  .training-list li {
+    font-size: 0.88rem;
+    padding-left: 1.25rem;
+  }
+  .board-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .board-card {
+    padding: 1.5rem 1.25rem;
+  }
+  .archive-media-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .announcement-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+  .yoklama-callout, .insta-box {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* Mobil Menü Çekmecesi (Burger Menü) */
+  .gtok-mobile-drawer {
+    display: none;
+    position: fixed;
+    top: 68px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 12, 18, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 99999;
+    padding: 1.25rem 1.25rem 2.5rem;
+    flex-direction: column;
+    overflow-y: auto;
+    border-top: 1px solid var(--gtok-border);
+  }
+  .gtok-mobile-drawer.open {
+    display: flex !important;
+    animation: drawerFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes drawerFadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .gtok-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .gtok-drawer-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gtok-cream);
+  }
+  .gtok-drawer-close {
+    background: transparent;
+    border: none;
+    color: var(--gtok-text-muted);
+    font-size: 1.35rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+  }
+  .gtok-drawer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .gtok-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--gtok-radius-sm);
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 0.98rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .gtok-drawer-link:active, .gtok-drawer-link:hover {
+    background: rgba(212, 163, 115, 0.12);
+    border-color: rgba(212, 163, 115, 0.3);
+    color: #fff;
+    transform: translateX(4px);
+  }
+  .gtok-drawer-link .drawer-icon {
+    font-size: 1.15rem;
+    width: 24px;
+    text-align: center;
+  }
+  .gtok-drawer-link.gtok-drawer-highlight {
+    background: linear-gradient(135deg, rgba(212, 163, 115, 0.2), rgba(138, 28, 43, 0.25));
+    border: 1px solid rgba(212, 163, 115, 0.45);
+    color: #fff;
+    font-weight: 700;
+  }
+  .gtok-drawer-link.gtok-drawer-admin {
+    margin-top: 0.75rem;
+    background: rgba(138, 28, 43, 0.18);
+    border: 1px solid rgba(138, 28, 43, 0.45);
+    color: #fca5a5;
+  }
+}
+
+/* Antrenman Yönetimi Stilleri */
+.btn-manage-schedule {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gtok-surface);
+  border: 1px solid var(--gtok-cream-border);
+  color: var(--gtok-cream-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: var(--gtok-radius-sm);
+  cursor: pointer;
+  transition: var(--gtok-transition);
+}
+.btn-manage-schedule:hover {
+  background: var(--gtok-cream-surface);
+  border-color: var(--gtok-cream);
+  color: #fff;
+}
+.training-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+.training-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-schedule-action {
+  background: transparent;
+  border: 1px solid var(--gtok-border);
+  color: var(--gtok-text-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--gtok-radius-sm);
+  cursor: pointer;
+  transition: var(--gtok-transition);
+}
+.btn-schedule-action:hover {
+  color: var(--gtok-cream-light);
+  border-color: var(--gtok-cream-border);
+}
+.btn-schedule-action.delete:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+}

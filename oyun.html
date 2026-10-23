@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Puta Vur! — KTÜ GTOK</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0f1e;
+    overflow: hidden;
+    font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  canvas { display: block; }
+  #back {
+    position: fixed;
+    top: 12px; left: 12px;
+    background: rgba(10,15,30,0.85);
+    border: 1px solid rgba(212,163,99,0.3);
+    color: #d4a363;
+    padding: 7px 15px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  #back:active { background: rgba(212,163,99,0.18); }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<a href="index.html" id="back">← Ana Sayfa</a>
+<canvas id="c"></canvas>
+
+<script>
+// ─── CANVAS ──────────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let W = 0, H = 0;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  if (gs) updateLayout();
+}
+window.addEventListener('resize', resize);
+
+// ─── AUDIO ───────────────────────────────────────────────────────────────────
+let _ac = null;
+function getAC() {
+  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ac.state === 'suspended') _ac.resume();
+  return _ac;
+}
+function beep(type) {
+  try {
+    const a = getAC(), t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    if (type === 'shoot') {
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(700, t);
+      o.frequency.exponentialRampToValueAtTime(180, t + 0.09);
+      g.gain.setValueAtTime(0.10, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      o.start(t); o.stop(t + 0.1);
+    } else if (type === 'thud') {
+      o.type = 'sine';
+      o.frequency.setValueAtTime(230, t);
+      o.frequency.exponentialRampToValueAtTime(70, t + 0.12);
+      g.gain.setValueAtTime(0.28, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+      o.start(t); o.stop(t + 0.16);
+    } else if (type === 'crack') {
+      const noise = a.createOscillator();
+      const ng = a.createGain();
+      noise.connect(ng); ng.connect(a.destination);
+      noise.type = 'sawtooth';
+      noise.frequency.setValueAtTime(200, t);
+      noise.frequency.linearRampToValueAtTime(50, t + 0.25);
+      ng.gain.setValueAtTime(0.35, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      noise.start(t); noise.stop(t + 0.28);
+    } else if (type === 'up') {
+      [330, 440, 550, 660, 880].forEach((f, i) => {
+        const oo = a.createOscillator(), gg = a.createGain();
+        oo.connect(gg); gg.connect(a.destination);
+        oo.type = 'sine'; oo.frequency.value = f;
+        const s = t + i * 0.08;
+        gg.gain.setValueAtTime(0.16, s);
+        gg.gain.exponentialRampToValueAtTime(0.001, s + 0.13);
+        oo.start(s); oo.stop(s + 0.13);
+      });
+    }
+  } catch (_) {}
+}
+
+// ─── STARS ───────────────────────────────────────────────────────────────────
+const STARS = Array.from({length: 90}, () => ({
+  x: Math.random(), y: Math.random(),
+  r: Math.random() * 1.6 + 0.3,
+  a: Math.random() * 0.55 + 0.08
+}));
+
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const GOLD = '#d4a363';
+const DARK = '#0a0f1e';
+const RED  = '#e85555';
+const HS_KEY = 'gtok_hs_puta';
+
+// ─── LEVEL CONFIG ────────────────────────────────────────────────────────────
+function lvlCfg(l) {
+  return {
+    speed:       Math.min(0.017 + (l - 1) * 0.0045, 0.060),
+    needed:      Math.min(4 + l, 12),
+    dirChanges:  l >= 4,
+    flipMin:     Math.max(60, 150 - l * 12),
+    flipMax:     Math.max(90, 200 - l * 15)
+  };
+}
+
+// ─── GAME STATE ──────────────────────────────────────────────────────────────
+let gs = null;
+
+function updateLayout() {
+  if (!gs) return;
+  gs.tx = W / 2;
+  gs.ty = H * 0.34;
+  gs.tr = Math.min(W, H) * 0.175;
+  gs.shootY = H - 88;
+}
+
+function initState() {
+  const cfg = lvlCfg(1);
+  gs = {
+    screen:    'title',
+    score:     0,
+    hs:        +localStorage.getItem(HS_KEY) || 0,
+    level:     1,
+    tx: 0, ty: 0, tr: 0, shootY: 0,
+    angle:     0,
+    speed:     cfg.speed,
+    dir:       1,
+    frame:     0,
+    nextFlip:  150 + Math.random() * 120,
+    placed:    [],
+    placedCount: 0,
+    needed:    cfg.needed,
+    arrow:     null,
+    canShoot:  true,
+    particles: [],
+    texts:     [],
+    shake:     0,
+    transTimer:0,
+    newRecord: false
+  };
+  updateLayout();
+}
+
+// ─── DRAWING ─────────────────────────────────────────────────────────────────
+
+function drawStars() {
+  STARS.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+    ctx.fill();
+  });
+}
+
+function drawTarget() {
+  const { tx, ty, tr, angle } = gs;
+  ctx.save();
+  ctx.translate(tx, ty);
+  ctx.rotate(angle);
+
+  // Outer glow
+  ctx.shadowBlur  = 28;
+  ctx.shadowColor = 'rgba(180,100,30,0.45)';
+
+  // Wood fill
+  const grd = ctx.createRadialGradient(-tr * 0.18, -tr * 0.18, 0, 0, 0, tr);
+  grd.addColorStop(0.0, '#cc9458');
+  grd.addColorStop(0.55,'#9a5e2c');
+  grd.addColorStop(1.0, '#6a3610');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.arc(0, 0, tr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Ring stripes
+  [
+    { r: tr * 0.82, c: 'rgba(255,255,255,0.20)', w: 1.5 },
+    { r: tr * 0.62, c: 'rgba(255,215,0,0.45)',   w: 2   },
+    { r: tr * 0.42, c: 'rgba(220,70,70,0.55)',   w: 2   },
+    { r: tr * 0.22, c: 'rgba(70,140,230,0.65)',  w: 2   }
+  ].forEach(({r, c, w}) => {
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.strokeStyle = c; ctx.lineWidth = w; ctx.stroke();
+  });
+
+  // Gold center dot
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.arc(0, 0, tr * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wood grain lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.065)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 7; i++) {
+    const yy = -tr + (i + 0.5) * (tr * 2 / 7);
+    const rx = Math.sqrt(Math.max(0, tr * tr - yy * yy)) * 0.97;
+    ctx.beginPath();
+    ctx.ellipse(0, yy, rx, tr * 0.038, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Draw a single arrow: tip at (tipX, tipY), pointing radially at worldAngle
+function drawArrow(tipX, tipY, worldAngle, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha ?? 1;
+  ctx.translate(tipX, tipY);
+  // After this rotation: -Y → inward toward center, +Y → outward from center
+  ctx.rotate(worldAngle + Math.PI / 2);
+
+  const L = 68; // shaft length
+
+  ctx.shadowBlur  = 5;
+  ctx.shadowColor = 'rgba(0,0,0,0.55)';
+
+  // Metal tip (pointing inward = -Y direction)
+  ctx.fillStyle = '#b0b0b0';
+  ctx.beginPath();
+  ctx.moveTo(0, -12);
+  ctx.lineTo(-5.5, 5);
+  ctx.lineTo(5.5, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  // Shaft (outward = +Y)
+  ctx.fillStyle = '#9a6030';
+  ctx.fillRect(-2.5, 5, 5, L);
+
+  // Nock
+  ctx.fillStyle = '#6a3618';
+  ctx.fillRect(-2.5, 5 + L - 9, 5, 9);
+
+  // Fletching left
+  ctx.fillStyle = '#cc3030';
+  ctx.beginPath();
+  ctx.moveTo(-2.5, 5 + L - 12);
+  ctx.lineTo(-13,  5 + L + 10);
+  ctx.lineTo(-2.5, 5 + L + 1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Fletching right
+  ctx.beginPath();
+  ctx.moveTo(2.5, 5 + L - 12);
+  ctx.lineTo(13,  5 + L + 10);
+  ctx.lineTo(2.5, 5 + L + 1);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPlacedArrows() {
+  const { tx, ty, tr, angle, placed } = gs;
+  placed.forEach(sa => {
+    const wa  = angle + sa.angle;
+    const tipX = tx + Math.cos(wa) * (tr * 0.87);
+    const tipY = ty + Math.sin(wa) * (tr * 0.87);
+    drawArrow(tipX, tipY, wa, 1);
+  });
+}
+
+function drawFlyingArrow() {
+  if (!gs.arrow) return;
+  const { x, y, ang } = gs.arrow;
+  drawArrow(x, y, ang, 1);
+}
+
+function drawReadyArrow() {
+  if (!gs.canShoot || gs.arrow || gs.screen !== 'playing') return;
+  // Stationary arrow at bottom center, pointing up
+  drawArrow(W / 2, gs.shootY, -Math.PI / 2, 0.85);
+}
+
+function drawHUD() {
+  const fs = Math.min(W * 0.055, 27);
+
+  // Score (top-right)
+  ctx.textAlign  = 'right';
+  ctx.fillStyle  = GOLD;
+  ctx.font       = `700 ${fs}px Outfit, system-ui`;
+  ctx.fillText(gs.score, W - 18, 50);
+  ctx.font       = `500 ${fs * 0.48}px Outfit, system-ui`;
+  ctx.fillStyle  = 'rgba(212,163,99,0.50)';
+  ctx.fillText('SKOR', W - 18, 50 + fs * 0.58);
+
+  // Level (top-left)
+  ctx.textAlign  = 'left';
+  ctx.fillStyle  = GOLD;
+  ctx.font       = `700 ${fs}px Outfit, system-ui`;
+  ctx.fillText(`SEVİYE ${gs.level}`, 18, 50);
+  ctx.font       = `500 ${fs * 0.48}px Outfit, system-ui`;
+  ctx.fillStyle  = 'rgba(212,163,99,0.50)';
+  ctx.fillText(`EN İYİ: ${gs.hs}`, 18, 50 + fs * 0.58);
+
+  // Arrow counter (bottom)
+  const spacing = Math.min(30, (W * 0.7) / gs.needed);
+  const total   = gs.needed;
+  const ox      = W / 2 - (total * spacing) / 2;
+  const oy      = H - 38;
+
+  for (let i = 0; i < total; i++) {
+    const x = ox + i * spacing + spacing / 2;
+    const used = i < gs.placedCount;
+    ctx.save();
+    ctx.translate(x, oy);
+    if (used) {
+      ctx.beginPath();
+      ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(212,163,99,0.22)';
+      ctx.fill();
+    } else {
+      ctx.fillStyle = i === gs.placedCount
+        ? 'rgba(212,163,99,0.95)'
+        : 'rgba(212,163,99,0.45)';
+      ctx.beginPath();
+      ctx.moveTo(0, -9); ctx.lineTo(-4.5, 1); ctx.lineTo(4.5, 1);
+      ctx.closePath(); ctx.fill();
+      ctx.fillRect(-1.5, 1, 3, 9);
+    }
+    ctx.restore();
+  }
+
+  // Hint pulse
+  if (gs.placedCount === 0 && gs.screen === 'playing') {
+    const alpha = 0.35 + Math.sin(Date.now() / 550) * 0.25;
+    ctx.textAlign  = 'center';
+    ctx.fillStyle  = `rgba(212,163,99,${alpha})`;
+    ctx.font       = `500 ${Math.min(W * 0.037, 16)}px Outfit, system-ui`;
+    ctx.fillText('Ekrana dokun — ateş et!', W / 2, H - 62);
+  }
+}
+
+function drawParticles() {
+  gs.particles = gs.particles.filter(p => p.life > 0);
+  gs.particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle   = p.c;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    p.x += p.vx; p.y += p.vy; p.vy += 0.20; p.life--;
+  });
+}
+
+function drawTexts() {
+  gs.texts = gs.texts.filter(t => t.life > 0);
+  gs.texts.forEach(t => {
+    ctx.save();
+    ctx.globalAlpha  = t.life / t.maxLife;
+    ctx.textAlign    = 'center';
+    ctx.font         = `700 ${t.sz}px Outfit, system-ui`;
+    ctx.fillStyle    = t.c;
+    ctx.fillText(t.txt, t.x, t.y);
+    ctx.restore();
+    t.y -= 1.4; t.life--;
+  });
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────────────────────
+
+function drawTitle() {
+  ctx.fillStyle = DARK;
+  ctx.fillRect(0, 0, W, H);
+  drawStars();
+  drawTarget(); // spinning in bg
+
+  // Gradient overlay below target
+  const ov = ctx.createLinearGradient(0, H * 0.45, 0, H);
+  ov.addColorStop(0,   'rgba(10,15,30,0)');
+  ov.addColorStop(0.25,'rgba(10,15,30,0.92)');
+  ov.addColorStop(1,   DARK);
+  ctx.fillStyle = ov;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+
+  // Big title
+  ctx.fillStyle = GOLD;
+  ctx.font      = `800 ${Math.min(W * 0.12, 56)}px Outfit, system-ui`;
+  ctx.fillText('PUTA VUR!', W / 2, H * 0.60);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.48)';
+  ctx.font      = `400 ${Math.min(W * 0.038, 17)}px Outfit, system-ui`;
+  ctx.fillText('KTÜ GTOK Okçuluk Oyunu', W / 2, H * 0.60 + 40);
+
+  // Rules
+  ctx.fillStyle = 'rgba(255,255,255,0.62)';
+  ctx.font      = `400 ${Math.min(W * 0.036, 15.5)}px Outfit, system-ui`;
+  ['Dönen putaya ok yerleştir',
+   'Oklara çarparsan biter',
+   'Her seviyede hız artar!'].forEach((l, i) =>
+    ctx.fillText(l, W / 2, H * 0.71 + i * 26)
+  );
+
+  // High score
+  if (gs.hs > 0) {
+    ctx.fillStyle = 'rgba(212,163,99,0.62)';
+    ctx.font      = `600 ${Math.min(W * 0.038, 16)}px Outfit, system-ui`;
+    ctx.fillText(`🏆  En Yüksek: ${gs.hs}`, W / 2, H * 0.86);
+  }
+
+  // Start button (pulse)
+  const bW = Math.min(W * 0.54, 236), bH = 56;
+  const bX = W / 2 - bW / 2, bY = H * 0.90;
+  const p  = 1 + Math.sin(Date.now() / 460) * 0.025;
+  ctx.save();
+  ctx.translate(W/2, bY + bH/2);
+  ctx.scale(p, p);
+  ctx.translate(-W/2, -(bY + bH/2));
+  ctx.fillStyle = GOLD;
+  ctx.beginPath();
+  ctx.roundRect(bX, bY, bW, bH, 15);
+  ctx.fill();
+  ctx.fillStyle = DARK;
+  ctx.font      = `700 ${Math.min(W * 0.049, 22)}px Outfit, system-ui`;
+  ctx.fillText('OYNA  →', W / 2, bY + 37);
+  ctx.restore();
+}
+
+function drawDead() {
+  ctx.fillStyle = 'rgba(10,15,30,0.84)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = RED;
+  ctx.font      = `800 ${Math.min(W * 0.09, 44)}px Outfit, system-ui`;
+  ctx.fillText('ÇARPTINIZ! 💥', W / 2, H * 0.25);
+
+  ctx.fillStyle = '#fff';
+  ctx.font      = `700 ${Math.min(W * 0.095, 48)}px Outfit, system-ui`;
+  ctx.fillText(gs.score, W / 2, H * 0.38);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font      = `400 ${Math.min(W * 0.038, 17)}px Outfit, system-ui`;
+  ctx.fillText('puan', W / 2, H * 0.38 + 32);
+
+  if (gs.newRecord) {
+    ctx.fillStyle = GOLD;
+    ctx.font      = `700 ${Math.min(W * 0.05, 23)}px Outfit, system-ui`;
+    ctx.fillText('🏆  Yeni Rekor!', W / 2, H * 0.50);
+  } else if (gs.hs > 0) {
+    ctx.fillStyle = 'rgba(212,163,99,0.60)';
+    ctx.font      = `400 ${Math.min(W * 0.038, 17)}px Outfit, system-ui`;
+    ctx.fillText(`En yüksek: ${gs.hs}`, W / 2, H * 0.50);
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.38)';
+  ctx.font      = `400 ${Math.min(W * 0.035, 15)}px Outfit, system-ui`;
+  ctx.fillText(`${gs.level}. seviyeye kadar ulaştınız`, W / 2, H * 0.57);
+
+  const bW = Math.min(W * 0.54, 224), bH = 54;
+
+  // Restart btn
+  ctx.fillStyle = GOLD;
+  ctx.beginPath();
+  ctx.roundRect(W/2 - bW/2, H * 0.64, bW, bH, 14);
+  ctx.fill();
+  ctx.fillStyle = DARK;
+  ctx.font      = `700 ${Math.min(W * 0.045, 20)}px Outfit, system-ui`;
+  ctx.fillText('TEKRAR OYNA', W / 2, H * 0.64 + 35);
+
+  // Menu btn
+  ctx.fillStyle = 'rgba(255,255,255,0.09)';
+  ctx.beginPath();
+  ctx.roundRect(W/2 - bW/2, H * 0.64 + 68, bW, bH, 14);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.62)';
+  ctx.font      = `500 ${Math.min(W * 0.04, 18)}px Outfit, system-ui`;
+  ctx.fillText('Ana Sayfa →', W / 2, H * 0.64 + 68 + 34);
+}
+
+function drawLevelDone() {
+  ctx.fillStyle = 'rgba(10,15,30,0.78)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = GOLD;
+  ctx.font      = `800 ${Math.min(W * 0.082, 40)}px Outfit, system-ui`;
+  ctx.fillText('SEVİYE TAMAM! 🎯', W / 2, H * 0.33);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.font      = `500 ${Math.min(W * 0.046, 21)}px Outfit, system-ui`;
+  ctx.fillText(`SEVİYE ${gs.level + 1} başlıyor…`, W / 2, H * 0.45);
+
+  // Auto-progress bar
+  const prog = gs.transTimer / 80;
+  const bW   = Math.min(W * 0.58, 250);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath(); ctx.roundRect(W/2 - bW/2, H * 0.53, bW, 7, 4); ctx.fill();
+  ctx.fillStyle = GOLD;
+  ctx.beginPath(); ctx.roundRect(W/2 - bW/2, H * 0.53, bW * Math.min(prog, 1), 7, 4); ctx.fill();
+}
+
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+
+function burst(x, y, color, n = 12) {
+  for (let i = 0; i < n; i++) {
+    const a  = (Math.PI * 2 * i / n) + (Math.random() - 0.5) * 0.7;
+    const sp = 1.8 + Math.random() * 3.2;
+    gs.particles.push({
+      x, y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 1.8,
+      r:  2.5 + Math.random() * 2.5,
+      c:  color, life: 35 + Math.random() * 20, maxLife: 55
+    });
+  }
+}
+
+function floatTxt(txt, x, y, c, sz = 28) {
+  gs.texts.push({ txt, x, y, c, sz, life: 58, maxLife: 58 });
+}
+
+function normAngle(a) {
+  return ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+}
+
+function shoot() {
+  if (!gs.canShoot || gs.arrow || gs.screen !== 'playing') return;
+  const sx = W / 2, sy = gs.shootY;
+  const dx = gs.tx - sx, dy = gs.ty - sy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const spd  = dist / 18;
+
+  gs.canShoot = false;
+  beep('shoot');
+  gs.arrow = {
+    x: sx, y: sy,
+    vx: (dx / dist) * spd,
+    vy: (dy / dist) * spd,
+    ang: Math.atan2(dy, dx)
+  };
+}
+
+function update() {
+  const scr = gs.screen;
+
+  if (scr === 'title') { gs.angle += 0.013; return; }
+
+  if (scr === 'dead') { gs.angle += 0.007; drawParticles(); drawTexts(); return; }
+
+  if (scr === 'level_done') {
+    gs.angle += gs.speed * gs.dir;
+    gs.transTimer++;
+    if (gs.transTimer >= 80) advanceLevel();
+    return;
+  }
+
+  // Playing
+  gs.angle += gs.speed * gs.dir;
+  gs.frame++;
+  if (gs.shake > 0) gs.shake -= 1;
+
+  const cfg = lvlCfg(gs.level);
+  if (cfg.dirChanges && gs.frame >= gs.nextFlip) {
+    gs.dir     *= -1;
+    gs.nextFlip = gs.frame + cfg.flipMin + Math.random() * (cfg.flipMax - cfg.flipMin);
+  }
+
+  const fa = gs.arrow;
+  if (fa) {
+    fa.x += fa.vx;
+    fa.y += fa.vy;
+
+    const dx   = fa.x - gs.tx;
+    const dy   = fa.y - gs.ty;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist <= gs.tr * 0.91) {
+      const worldAngle = Math.atan2(dy, dx);
+      const relAngle   = normAngle(worldAngle - gs.angle);
+
+      // Collision check: ~11° threshold
+      let hit = false;
+      for (const sa of gs.placed) {
+        if (Math.abs(normAngle(relAngle - sa.angle)) < 0.195) { hit = true; break; }
+      }
+
+      gs.arrow = null;
+
+      if (hit) {
+        beep('crack');
+        burst(fa.x, fa.y, RED, 24);
+        gs.shake    = 24;
+        gs.canShoot = false;
+        setTimeout(() => {
+          if (gs.score > gs.hs) {
+            gs.hs = gs.score;
+            gs.newRecord = true;
+            localStorage.setItem(HS_KEY, gs.hs);
+          }
+          gs.screen = 'dead';
+        }, 380);
+
+      } else {
+        beep('thud');
+        gs.placed.push({ angle: relAngle });
+        gs.placedCount++;
+
+        const pts = 10 * gs.level;
+        gs.score += pts;
+        burst(fa.x, fa.y, GOLD, 10);
+        floatTxt(`+${pts}`, fa.x, fa.y - 22, GOLD);
+
+        if (gs.placedCount >= gs.needed) {
+          beep('up');
+          gs.screen    = 'level_done';
+          gs.transTimer = 0;
+          floatTxt('SEVİYE TAMAM!', W / 2, H * 0.4, GOLD, 32);
+        } else {
+          gs.canShoot = true;
+        }
+      }
+    }
+
+    // Off-screen: reset
+    if (fa.y < -90 || fa.x < -90 || fa.x > W + 90) {
+      gs.arrow    = null;
+      gs.canShoot = true;
+    }
+  }
+}
+
+function advanceLevel() {
+  gs.level++;
+  const cfg      = lvlCfg(gs.level);
+  gs.speed       = cfg.speed;
+  gs.needed      = cfg.needed;
+  gs.placed      = [];
+  gs.placedCount = 0;
+  gs.canShoot    = true;
+  gs.frame       = 0;
+  gs.nextFlip    = 150 + Math.random() * 120;
+  gs.screen      = 'playing';
+}
+
+// ─── MAIN LOOP ────────────────────────────────────────────────────────────────
+
+function draw() {
+  let ox = 0, oy = 0;
+  if (gs.shake > 0) {
+    ox = (Math.random() - 0.5) * gs.shake * 0.55;
+    oy = (Math.random() - 0.5) * gs.shake * 0.55;
+  }
+
+  ctx.save();
+  ctx.translate(ox, oy);
+
+  if (gs.screen === 'title') { drawTitle(); ctx.restore(); return; }
+
+  // Game background
+  ctx.fillStyle = DARK;
+  ctx.fillRect(-Math.abs(ox) - 2, -Math.abs(oy) - 2, W + Math.abs(ox) * 2 + 4, H + Math.abs(oy) * 2 + 4);
+  drawStars();
+
+  drawTarget();
+  drawPlacedArrows();
+  drawFlyingArrow();
+  drawParticles();
+  drawTexts();
+
+  if (gs.screen === 'playing') {
+    drawHUD();
+    drawReadyArrow();
+  }
+
+  if (gs.screen === 'dead')       drawDead();
+  if (gs.screen === 'level_done') { drawHUD(); drawLevelDone(); }
+
+  ctx.restore();
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ─── INPUT ────────────────────────────────────────────────────────────────────
+
+function tap(px, py) {
+  const scr = gs.screen;
+
+  if (scr === 'title') {
+    if (py > H * 0.85) startGame();
+    return;
+  }
+
+  if (scr === 'dead') {
+    const bW = Math.min(W * 0.54, 224);
+    // Restart
+    if (py > H * 0.64 && py < H * 0.64 + 54 && Math.abs(px - W/2) < bW/2) {
+      startGame(); return;
+    }
+    // Menu
+    if (py > H * 0.64 + 68 && py < H * 0.64 + 122 && Math.abs(px - W/2) < bW/2) {
+      window.location.href = 'index.html'; return;
+    }
+    // Tap anywhere else = restart
+    startGame(); return;
+  }
+
+  if (scr === 'playing') { shoot(); }
+}
+
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); tap(e.clientX, e.clientY); });
+canvas.addEventListener('touchstart',  e => e.preventDefault(), { passive: false });
+
+// ─── START GAME ───────────────────────────────────────────────────────────────
+
+function startGame() {
+  const cfg = lvlCfg(1);
+  Object.assign(gs, {
+    screen: 'playing',
+    score: 0,
+    level: 1,
+    speed: cfg.speed,
+    dir: 1, frame: 0,
+    nextFlip: 150 + Math.random() * 120,
+    placed: [], placedCount: 0, needed: cfg.needed,
+    arrow: null, canShoot: true,
+    particles: [], texts: [],
+    shake: 0, transTimer: 0, newRecord: false
+  });
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+resize();
+initState();
+loop();
+</script>
+</body>
+</html>
