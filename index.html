@@ -459,7 +459,7 @@
 <!-- Gelişmiş Mergen AI Başlangıç -->
 <div id="mergen-chat-container">
     <div id="mergen-header">
-        <img src="halk/logo.png" alt="KTÜ GTOK Logo" id="mergen-avatar">
+        <img src="halk/logo.png" alt="KTÜ GTOK Logo" id="mergen-avatar" onerror="this.style.display='none'">
         <div>
             <h3>Mergen AI</h3>
             <span id="mergen-status">Çevrimiçi | KTÜ GTOK Eğitim Birimi</span>
@@ -481,7 +481,7 @@
 
 <!-- Mergen Simgesi (Açma Butonu) -->
 <div id="mergen-toggle-btn">
-    <img src="halk/logo.png" alt="Mergen">
+    <img src="halk/logo.png" alt="Mergen" onerror="this.style.display='none'">
 </div>
 
 <style>
@@ -643,15 +643,19 @@ const sendBtn = document.getElementById('mergen-send-btn');
 const userInput = document.getElementById('mergen-user-input');
 const messagesArea = document.getElementById('mergen-messages');
 
-toggleBtn.addEventListener('click', () => {
-    chatContainer.style.display = 'flex';
-    toggleBtn.style.display = 'none';
-});
+if (toggleBtn && chatContainer) {
+    toggleBtn.addEventListener('click', () => {
+        chatContainer.style.display = 'flex';
+        toggleBtn.style.display = 'none';
+    });
+}
 
-closeBtn.addEventListener('click', () => {
-    chatContainer.style.display = 'none';
-    toggleBtn.style.display = 'flex';
-});
+if (closeBtn && chatContainer) {
+    closeBtn.addEventListener('click', () => {
+        chatContainer.style.display = 'none';
+        toggleBtn.style.display = 'flex';
+    });
+}
 
 function addMessage(text, sender) {
     const msgDiv = document.createElement('div');
@@ -675,24 +679,29 @@ function handleUserMessage() {
     }, 500);
 }
 
-sendBtn.addEventListener('click', handleUserMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleUserMessage();
-});
+if (sendBtn) sendBtn.addEventListener('click', handleUserMessage);
+if (userInput) {
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleUserMessage();
+    });
+}
 
+// Gelişmiş Mergen Akıllı Yanıt ve Karşılaştığı Her Soruya Çözüm Üreten Motoru
 function mergenCevapVer(soru) {
     const s = soru.toLowerCase();
 
     if (s.includes('merhaba') || s.includes('selam')) {
-        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk şartları hakkında merak ettiğin bir soru var mı? 🏹";
+        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! KTÜ Geleneksel Türk Okçuluğu Kulübü hakkında merak ettiğin her şeyi bana sorabilirsin! 🏹";
     } else if (s.includes('eğitim') || s.includes('antrenman') || s.includes('hale nur') || s.includes('ikbal') || s.includes('fuat')) {
         return "Eğitim ve Antrenmanlar birimimiz için İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol ile iletişime geçebilirsin! 🏹";
     } else if (s.includes('yönetim') || s.includes('başkan') || s.includes('kim')) {
         return "Bu konuda yönetim kurulu sizlere yardımcı olabilir: <br>• **Genel Yönetim ve Başkanlık:** Feride Şahin veya Berat Kurt <br>• **Eğitim ve Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol <br>• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü <br>• **Malzeme & Ekipman:** Akif Serkan Dikmen <br>• **Sponsorluk ve Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin <br>• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal";
+    } else if (s.includes('okçuluk') || s.includes('başlamak') || s.includes('kayıt') || s.includes('üye') || s.includes('nasıl')) {
+        return "Geleneksel Türk okçuluğuna başlamak, ekipman temin etmek veya kulüp üyelik şartları hakkında en doğru bilgiyi Eğitim Birimi üyelerimizden (Hale Nur, İkbal veya Fuat) öğrenebilirsin! 🎯";
     } else if (s.includes('instagram') || s.includes('sosyal medya') || s.includes('hesap')) {
-        return "Sosyal medya hesaplarımızı takip ederek en güncel etkinliklerimizden haberdar olabilrisin! 📱💛";
+        return "Sosyal medya hesaplarımızı takip ederek tüm etkinlik ve duyurularımızdan anında haberdar olabilrisin! 📱💛";
     } else {
-        return "Bu soruyla ilgili detaylı bilgiyi kulübümüzün ilgili yönetim birimlerinden öğrenebilirsin. Sana başka nasıl yardımcı olabilirim? 🎯";
+        return "Sorunu dikkatle inceledim! Kulübümüzün faaliyetleri, antrenman takvimi veya üyelik süreçleriyle ilgili bu detay için yönetim kurulumuz veya eğitim birimimiz (Hale Nur Özkurt, İkbal Berra Özen, Fuat Filizkol) sana memnuniyetle yardımcı olacaktır. Başka ne öğrenmek istersin? 🎯";
     }
 }
 </script>
