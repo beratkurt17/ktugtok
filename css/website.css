@@ -1338,48 +1338,50 @@ body {
     cursor: pointer;
     padding: 0.25rem 0.5rem;
   }
-  .gtok-drawer-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-  }
-  .gtok-drawer-link {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem;
-    border-radius: var(--gtok-radius-sm);
-    color: #e2e8f0;
-    text-decoration: none;
-    font-size: 0.98rem;
-    font-weight: 500;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-  }
-  .gtok-drawer-link:active, .gtok-drawer-link:hover {
-    background: rgba(212, 163, 115, 0.12);
-    border-color: rgba(212, 163, 115, 0.3);
-    color: #fff;
-    transform: translateX(4px);
-  }
-  .gtok-drawer-link .drawer-icon {
-    font-size: 1.15rem;
-    width: 24px;
-    text-align: center;
-  }
-  .gtok-drawer-link.gtok-drawer-highlight {
-    background: linear-gradient(135deg, rgba(212, 163, 115, 0.2), rgba(138, 28, 43, 0.25));
-    border: 1px solid rgba(212, 163, 115, 0.45);
-    color: #fff;
-    font-weight: 700;
-  }
-  .gtok-drawer-link.gtok-drawer-admin {
-    margin-top: 0.75rem;
-    background: rgba(138, 28, 43, 0.18);
-    border: 1px solid rgba(138, 28, 43, 0.45);
-    color: #fca5a5;
-  }
+}
+
+/* Drawer içerik stilleri — media query dışında, her zaman geçerli */
+.gtok-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.gtok-drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--gtok-radius-sm);
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.98rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+.gtok-drawer-link:active, .gtok-drawer-link:hover {
+  background: rgba(212, 163, 115, 0.12);
+  border-color: rgba(212, 163, 115, 0.3);
+  color: #fff;
+  transform: translateX(4px);
+}
+.gtok-drawer-link .drawer-icon {
+  font-size: 1.15rem;
+  width: 24px;
+  text-align: center;
+}
+.gtok-drawer-link.gtok-drawer-highlight {
+  background: linear-gradient(135deg, rgba(212, 163, 115, 0.2), rgba(138, 28, 43, 0.25));
+  border: 1px solid rgba(212, 163, 115, 0.45);
+  color: #fff;
+  font-weight: 700;
+}
+.gtok-drawer-link.gtok-drawer-admin {
+  margin-top: 0.75rem;
+  background: rgba(138, 28, 43, 0.18);
+  border: 1px solid rgba(138, 28, 43, 0.45);
+  color: #fca5a5;
 }
 
 /* Antrenman Yönetimi Stilleri */

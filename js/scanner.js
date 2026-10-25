@@ -175,32 +175,28 @@ const Scanner = {
     const select = document.getElementById('camera-select');
     const selectedId = select && select.value && select.value !== '' ? select.value : null;
 
-    // Seçim yoksa kamera listesini tara ve arka kamerayı bul
     let cameraConfig;
     if (selectedId) {
       this.currentCameraId = selectedId;
       cameraConfig = { deviceId: { exact: selectedId } };
     } else {
+      // getUserMedia ile önce izin al + arka kameranın device ID'sini çek
       try {
-        const devices = await Html5Qrcode.getCameras();
-        const backCam = devices && devices.find(d =>
-          /back|arka|environment|rear|0/i.test(d.label)
-        );
-        if (backCam) {
-          this.currentCameraId = backCam.id;
-          cameraConfig = { deviceId: { exact: backCam.id } };
-        } else if (devices && devices.length > 0) {
-          // Birden fazla kamera varsa son olanı al (genellikle arka)
-          const cam = devices[devices.length - 1];
-          this.currentCameraId = cam.id;
-          cameraConfig = { deviceId: { exact: cam.id } };
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } }
+        });
+        const track = stream.getVideoTracks()[0];
+        const deviceId = track && track.getSettings && track.getSettings().deviceId;
+        stream.getTracks().forEach(t => t.stop());
+
+        if (deviceId) {
+          this.currentCameraId = deviceId;
+          cameraConfig = { deviceId: { exact: deviceId } };
         } else {
-          this.currentCameraId = null;
-          cameraConfig = { facingMode: { exact: "environment" } };
+          cameraConfig = { facingMode: 'environment' };
         }
       } catch (_) {
-        this.currentCameraId = null;
-        cameraConfig = { facingMode: "environment" };
+        cameraConfig = { facingMode: 'environment' };
       }
     }
 
