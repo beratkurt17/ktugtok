@@ -1310,12 +1310,12 @@ function renderBoardMembers() {
   renderBoardCards(members);
 }
 
-// Buluttan (Supabase) canlı verileri çek ve sayfayı anında güncelle
+// Buluttan (Firebase) canlı verileri çek ve sayfayı anında güncelle
 async function initSupabaseWebsiteSync() {
   try {
     if (!window.SupabaseDB) return;
 
-    // 1. Duyuruları Supabase Bulutundan çek
+    // 1. Duyuruları Firebase Bulutundan çek
     if (typeof SupabaseDB.getAnnouncementsCloud === 'function') {
       const annList = await SupabaseDB.getAnnouncementsCloud();
       if (annList && Array.isArray(annList) && annList.length > 0) {
@@ -1325,7 +1325,7 @@ async function initSupabaseWebsiteSync() {
       }
     }
 
-    // 2. Antrenman Seanslarını Supabase Bulutundan çek
+    // 2. Antrenman Seanslarını Firebase Bulutundan çek
     if (typeof SupabaseDB.getSessionsCloud === 'function') {
       const sessList = await SupabaseDB.getSessionsCloud();
       if (sessList && Array.isArray(sessList) && sessList.length > 0) {
@@ -1334,7 +1334,7 @@ async function initSupabaseWebsiteSync() {
       }
     }
 
-    // 3. Yönetim Kurulu Üyelerini Supabase Bulutundan çek (Gerçek 13 üye)
+    // 3. Yönetim Kurulu Üyelerini Firebase Bulutundan çek
     if (typeof SupabaseDB.getBoardMembersCloud === 'function') {
       const boardList = await SupabaseDB.getBoardMembersCloud();
       if (boardList && Array.isArray(boardList) && boardList.length > 0) {
@@ -1343,7 +1343,7 @@ async function initSupabaseWebsiteSync() {
       }
     }
   } catch (err) {
-    console.warn('Supabase web sync hatası:', err);
+    console.warn('Firebase web sync hatası:', err);
   }
 }
 

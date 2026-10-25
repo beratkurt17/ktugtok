@@ -1,88 +1,12 @@
 // Ana Uygulama Başlatıcı ve Navigasyon
-const SQL_SCHEMA_CODE = `-- ==============================================================================
--- KTÜ GTOK OKÇULUK KULÜBÜ - SUPABASE VERİTABANI TABLOLARI & GÜVENLİK AYARLARI
--- Bu SQL kodunu Supabase Dashboard > SQL Editor sekmesine yapıştırıp "Run" butonuna basınız.
--- ==============================================================================
-
--- 1. SPORCULAR / ÖĞRENCİLER TABLOSU
-CREATE TABLE IF NOT EXISTS public.students (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    faculty TEXT DEFAULT '',
-    department TEXT DEFAULT '',
-    category TEXT DEFAULT 'Genel',
-    phone TEXT DEFAULT '',
-    notes TEXT DEFAULT '',
-    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 2. YOKLAMA VE GİRİŞ KAYITLARI TABLOSU
-CREATE TABLE IF NOT EXISTS public.attendance (
-    record_id TEXT PRIMARY KEY,
-    student_id TEXT NOT NULL,
-    student_name TEXT NOT NULL,
-    category TEXT DEFAULT 'Genel',
-    date TEXT NOT NULL,
-    time TEXT NOT NULL,
-    status TEXT DEFAULT 'Geldi',
-    timestamp BIGINT,
-    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 3. KULÜP AYARLARI TABLOSU
-CREATE TABLE IF NOT EXISTS public.settings (
-    key TEXT PRIMARY KEY,
-    value JSONB NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 4. ROW LEVEL SECURITY (RLS) AYARLARI
-ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Allow public read students" ON public.students;
-CREATE POLICY "Allow public read students" ON public.students FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow public insert students" ON public.students;
-CREATE POLICY "Allow public insert students" ON public.students FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public update students" ON public.students;
-CREATE POLICY "Allow public update students" ON public.students FOR UPDATE USING (true);
-DROP POLICY IF EXISTS "Allow public delete students" ON public.students;
-CREATE POLICY "Allow public delete students" ON public.students FOR DELETE USING (true);
-
-DROP POLICY IF EXISTS "Allow public read attendance" ON public.attendance;
-CREATE POLICY "Allow public read attendance" ON public.attendance FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow public insert attendance" ON public.attendance;
-CREATE POLICY "Allow public insert attendance" ON public.attendance FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public update attendance" ON public.attendance;
-CREATE POLICY "Allow public update attendance" ON public.attendance FOR UPDATE USING (true);
-DROP POLICY IF EXISTS "Allow public delete attendance" ON public.attendance;
-CREATE POLICY "Allow public delete attendance" ON public.attendance FOR DELETE USING (true);
-
-DROP POLICY IF EXISTS "Allow public read settings" ON public.settings;
-CREATE POLICY "Allow public read settings" ON public.settings FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow public insert settings" ON public.settings;
-CREATE POLICY "Allow public insert settings" ON public.settings FOR INSERT WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow public update settings" ON public.settings;
-CREATE POLICY "Allow public update settings" ON public.settings FOR UPDATE USING (true);
-
--- 5. CANLI SENKRONİZASYON (REALTIME)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' AND tablename = 'students'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.students;
-  END IF;
-  
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables 
-    WHERE pubname = 'supabase_realtime' AND tablename = 'attendance'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.attendance;
-  END IF;
-END $$;`;
+const SQL_SCHEMA_CODE = `rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}`;
 
 document.addEventListener('DOMContentLoaded', async () => {
   // 1. Canlı Saat ve Tarih
@@ -239,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       btnSaveSupabase.disabled = false;
       if (btnSaveSupabaseText) btnSaveSupabaseText.textContent = '⚡ Test Et & Buluta Bağlan';
-      alert('✅ Tebrikler! Supabase bulut veritabanına başarıyla bağlanıldı.\n\nArtık tüm cihazlardan yapılan okutmalar anlık olarak eşitlenecektir.');
+      alert('✅ Tebrikler! Firebase bulut veritabanına başarıyla bağlanıldı.\n\nArtık tüm cihazlardan yapılan QR okutmalar anlık olarak eşitlenecektir.');
     });
   }
 
@@ -247,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnDisconnectSupabase = document.getElementById('btn-disconnect-supabase');
   if (btnDisconnectSupabase) {
     btnDisconnectSupabase.addEventListener('click', () => {
-      if (confirm('Bulut bağlantısını kesip yerel moda dönmek istediğinize emin misiniz?')) {
+      if (confirm('Firebase bulut bağlantısını kesip yerel moda dönmek istediğinize emin misiniz?')) {
         window.SupabaseDB.clearConfig();
         const urlInput = document.getElementById('supabase-url-input');
         const keyInput = document.getElementById('supabase-key-input');
@@ -519,7 +443,7 @@ const AnnouncementsAdmin = {
   },
 
   async deleteAnnouncement(id) {
-    if (!confirm('Bu duyuruyu silmek istediğinize emin misiniz? Ana sayfadan ve Supabase bulutundan da kaldırılacaktır.')) return;
+    if (!confirm('Bu duyuruyu silmek istediğinize emin misiniz? Ana sayfadan ve Firebase bulutundan da kaldırılacaktır.')) return;
     let list = this.getAnnouncements();
     list = list.filter(a => String(a.id) !== String(id));
     this.renderList();

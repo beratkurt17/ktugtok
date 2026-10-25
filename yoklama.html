@@ -507,25 +507,32 @@
 
           <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0;">
 
-          <!-- SUPABASE BULUT BAĞLANTISI -->
+          <!-- FİREBASE BULUT BAĞLANTISI -->
           <div>
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
-              <h3 style="font-size:1.05rem; color:#fff;">☁️ Supabase Bulut Bağlantısı</h3>
+              <h3 style="font-size:1.05rem; color:#fff;">☁️ Firebase Bulut Bağlantısı</h3>
               <div class="cloud-badge disconnected" id="settings-cloud-badge">
                 <span class="cloud-dot"></span>
                 <span id="settings-cloud-status">Bağlı Değil</span>
               </div>
             </div>
             <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:1.25rem;">
-              Farklı cihazlardan aynı veriye erişmek için Supabase projenizin bilgilerini girin.
+              Farklı cihazlardan aynı veriye erişmek için Firebase projenizin bilgilerini girin.
+              <a href="https://console.firebase.google.com" target="_blank" rel="noopener" style="color:var(--gtok-gold); text-decoration:none;">console.firebase.google.com</a>'da ücretsiz proje oluşturun.
             </p>
             <div class="form-group">
-              <label class="form-label">Supabase Proje URL</label>
-              <input type="text" id="supabase-url-input" class="form-control" placeholder="https://xxxx.supabase.co">
+              <label class="form-label">Firebase API Key</label>
+              <input type="text" id="supabase-url-input" class="form-control" placeholder="AIzaSy..." autocomplete="off" spellcheck="false">
+              <small style="color:#64748b; font-size:0.78rem;">Firebase Konsolu → Proje Ayarları → Genel → Web Uygulaması → <code style="background:rgba(255,255,255,0.06); padding:1px 4px; border-radius:3px;">apiKey</code></small>
             </div>
             <div class="form-group">
-              <label class="form-label">Anon Public Key</label>
-              <input type="text" id="supabase-key-input" class="form-control" placeholder="sb_publishable_...">
+              <label class="form-label">Firebase Project ID</label>
+              <input type="text" id="supabase-key-input" class="form-control" placeholder="ktugtok-12345" autocomplete="off" spellcheck="false">
+              <small style="color:#64748b; font-size:0.78rem;">Firebase Konsolu → Proje Ayarları → Genel → <code style="background:rgba(255,255,255,0.06); padding:1px 4px; border-radius:3px;">projectId</code></small>
+            </div>
+            <div style="background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:0.85rem 1rem; margin-bottom:1rem; font-size:0.82rem; color:#cbd5e1; line-height:1.6;">
+              ⚠️ <strong style="color:#fbbf24;">Firestore Güvenlik Kuralı:</strong> Firebase konsolunda <em>Firestore Database → Kurallar</em> sekmesinde aşağıdaki kuralı yapıştırın ve yayınlayın:<br>
+              <code style="display:block; margin-top:0.5rem; background:rgba(0,0,0,0.3); padding:0.5rem 0.75rem; border-radius:6px; font-size:0.8rem; color:#86efac; white-space:pre;">allow read, write: if true;</code>
             </div>
             <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1rem;">
               <button class="btn btn-primary" id="btn-save-supabase">
@@ -934,14 +941,10 @@
     </div>
   </div>
 
-  <!-- Supabase Kütüphanesi ve Entegrasyon Modülü -->
-  <script src="lib/supabase.js"></script>
-  <script>
-    if (typeof window.supabase === 'undefined' && typeof supabase !== 'undefined') {
-      window.supabase = supabase;
-    }
-  </script>
-  <script src="js/supabase-config.js?v=20261023_v13"></script>
+  <!-- Firebase Firestore Kütüphanesi (Google CDN - Türkiye'de erişilebilir) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js?v=20261024_v1"></script>
 
   <!-- Uygulama Scriptleri -->
   <script src="js/students-data.js?v=20261023_v13"></script>
