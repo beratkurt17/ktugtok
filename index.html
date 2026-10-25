@@ -456,155 +456,249 @@
 
   <!-- Kulüp Web Sitesi JS -->
   <script src="js/website.js?v=20261024_v15"></script><!-- Mergen AI - Geleneksel Türk Okçuluğu Asistanı Başlangıcı -->
-  <!-- Mergen AI Widget Başlangıcı -->
-<div id="mergen-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; font-family: 'Inter', sans-serif;">
+<!-- Gelişmiş Mergen AI Başlangıç -->
+<div id="mergen-chat-container">
+    <div id="mergen-header">
+        <img src="halk/logo.png" alt="KTÜ GTOK Logo" id="mergen-avatar">
+        <div>
+            <h3>Mergen AI</h3>
+            <span id="mergen-status">Çevrimiçi | KTÜ GTOK Eğitim Birimi</span>
+        </div>
+        <button id="mergen-close-btn">&times;</button>
+    </div>
     
-    <!-- Mergen Sohbet Açma Butonu -->
-    <button id="mergen-btn" onclick="toggleMergenChat()" style="background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; border: 2px solid #d4af37; padding: 10px 18px; border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-weight: 600; transition: all 0.3s ease;">
-        <img src="public/logo.jpg" alt="Mergen" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">
-        <span style="letter-spacing: 0.5px; padding-right: 6px;">MERGEN</span>
-    </button>
-
-    <!-- Mergen Sohbet Penceresi (Başlangıçta gizli) -->
-    <div id="mergen-chat-window" style="display: none; position: absolute; bottom: 70px; right: 0; width: 350px; height: 480px; background: #0f172a; border: 2px solid #d4af37; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); flex-direction: column; overflow: hidden;">
-        
-        <!-- Sohbet Üst Başlığı -->
-        <div style="background: #1e3a8a; padding: 12px 16px; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d4af37;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 18px;">🏹</span>
-                <strong>Mergen - KTÜ GTOK Bilgesi</strong>
-            </div>
-            <button onclick="toggleMergenChat()" style="background: none; border: none; color: white; font-size: 18px; cursor: pointer;">✕</button>
+    <div id="mergen-messages">
+        <div class="mergen-message bot-message">
+            Oğuz'un ve Türk'ün kadim okuyla selam olsun! Ben Mergen. KTÜ Geleneksel Türk Okçuluğu Kulübü hakkında merak ettiğin her şeyi bana sorabilirsin! 🏹
         </div>
-
-        <!-- Mesajlaşma Alanı -->
-        <div id="mergen-messages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #e2e8f0;">
-            <div style="background: #1e3a8a; padding: 10px 14px; border-radius: 10px; max-width: 85%;">
-                Oğuz'un ve Türk'ün kadim okuyla selam olsun! Ben Mergen. Kulübümüz veya geleneksel okçuluk terimleri hakkında bana dilediğini sorabilirsin! 🎯
-            </div>
-        </div>
-
-        <!-- Kullanıcı Girdi Alanı -->
-        <div style="padding: 10px; background: #0f172a; border-top: 1px solid #1e3a8a; display: flex; gap: 8px;">
-            <input type="text" id="mergen-input" placeholder="Mergen'e bir şeyler sor..." style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; outline: none;" onkeypress="if(event.key === 'Enter') mergenMesajGonder()">
-            <button onclick="mergenMesajGonder()" style="background: #d4af37; color: #0f172a; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer;">Gönder</button>
-        </div>
+    </div>
+    
+    <div id="mergen-input-area">
+        <input type="text" id="mergen-user-input" placeholder="Mergen'e bir şeyler sor...">
+        <button id="mergen-send-btn">Gönder</button>
     </div>
 </div>
 
-<!-- Mergen JavaScript Mantığı -->
+<!-- Mergen Simgesi (Açma Butonu) -->
+<div id="mergen-toggle-btn">
+    <img src="halk/logo.png" alt="Mergen">
+</div>
+
+<style>
+/* Mergen Arayüz Stilleri - Eski Şık Tasarım Korundu */
+#mergen-chat-container {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 380px;
+    height: 520px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 9999;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: 1px solid #e1e4e8;
+}
+
+#mergen-header {
+    background: linear-gradient(135deg, #1b3b2b, #2c5e43);
+    color: white;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#mergen-avatar, #mergen-toggle-btn img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.8);
+    background: #fff;
+}
+
+#mergen-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#mergen-status {
+    font-size: 11px;
+    color: #a8d5be;
+}
+
+#mergen-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    margin-left: auto;
+}
+
+#mergen-messages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mergen-message {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.bot-message {
+    background: #ffffff;
+    color: #333;
+    align-self: flex-start;
+    border: 1px solid #e1e4e8;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.user-message {
+    background: #2c5e43;
+    color: white;
+    align-self: flex-end;
+}
+
+#mergen-input-area {
+    padding: 12px;
+    background: #ffffff;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #e1e4e8;
+}
+
+#mergen-user-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+#mergen-user-input:focus {
+    border-color: #2c5e43;
+}
+
+#mergen-send-btn {
+    background: #2c5e43;
+    color: white;
+    border: none;
+    padding: 0 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+#mergen-send-btn:hover {
+    background: #1b3b2b;
+}
+
+#mergen-toggle-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: #2c5e43;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 9998;
+    transition: transform 0.2s;
+}
+
+#mergen-toggle-btn:hover {
+    transform: scale(1.05);
+}
+
+#mergen-toggle-btn img {
+    width: 50px;
+    height: 50px;
+}
+</style>
+
 <script>
-    function toggleMergenChat() {
-        const chatWindow = document.getElementById('mergen-chat-window');
-        if (chatWindow) {
-            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
-        }
+// Gelişmiş Mergen Mantığı ve Etkileşim Kodları
+const toggleBtn = document.getElementById('mergen-toggle-btn');
+const chatContainer = document.getElementById('mergen-chat-container');
+const closeBtn = document.getElementById('mergen-close-btn');
+const sendBtn = document.getElementById('mergen-send-btn');
+const userInput = document.getElementById('mergen-user-input');
+const messagesArea = document.getElementById('mergen-messages');
+
+toggleBtn.addEventListener('click', () => {
+    chatContainer.style.display = 'flex';
+    toggleBtn.style.display = 'none';
+});
+
+closeBtn.addEventListener('click', () => {
+    chatContainer.style.display = 'none';
+    toggleBtn.style.display = 'flex';
+});
+
+function addMessage(text, sender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('mergen-message');
+    msgDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+    msgDiv.innerHTML = text;
+    messagesArea.appendChild(msgDiv);
+    messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+function handleUserMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addMessage(text, 'user');
+    userInput.value = '';
+
+    setTimeout(() => {
+        const cevap = mergenCevapVer(text);
+        addMessage(cevap, 'bot');
+    }, 500);
+}
+
+sendBtn.addEventListener('click', handleUserMessage);
+userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleUserMessage();
+});
+
+// Gelişmiş Bilgi ve Soru-Cevap Havuzu (Eğitim Birimi ve Yönetim Dahil)
+function mergenCevapVer(soru) {
+    const s = soru.toLowerCase();
+
+    if (s.includes('merhaba') || s.includes('selam')) {
+        return "Oğuz'un dan Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk şartları hakkında merak ettiğin bir soru var mı? 🏹";
+    } else if (s.includes('eğitim') || s.includes('antrenman') || s.includes('hale nur') || s.includes('ikbal') || s.includes('fuat')) {
+        return "Eğitim ve Antrenmanlar birimimiz için İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol ile iletişime geçebilirsin! 🏹";
+    } else if (s.includes('yönetim') || s.includes('başkan') || s.includes('kim')) {
+        return "Bu konuda yönetim kurulu sizlere yardımcı olabilir: <br>• **Genel Yönetim ve Başkanlık:** Feride Şahin veya Berat Kurt <br>• **Eğitim ve Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol <br>• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü <br>• **Malzeme & Ekipman:** Akif Serkan Dikmen <br>• **Sponsorluk ve Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin <br>• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal";
+    } else if (s.includes('instagram') || s.includes('sosyal medya') || s.includes('hesap')) {
+        return "Sosyal medya hesaplarımızı takip ederek en güncel etkinliklerimizden haberdar olabilirsin! 📱💛";
+    } else {
+        return "Bu soruyla ilgili detaylı bilgiyi kulübümüzün ilgili yönetim birimlerinden öğrenebilirsin. Sana başka nasıl yardımcı olabilirim? 🎯";
     }
-
-    function mergenMesajGonder() {
-        const input = document.getElementById('mergen-input');
-        const messages = document.getElementById('mergen-messages');
-        const soru = input.value.trim();
-        
-        if (!soru) return;
-
-        // Kullanıcı mesajını ekle
-        const userMsg = document.createElement('div');
-        userMsg.style.cssText = 'background: #334155; color: white; padding: 10px 14px; border-radius: 10px; max-width: 85%; align-self: flex-end;';
-        userMsg.innerText = soru;
-        messages.appendChild(userMsg);
-        
-        input.value = '';
-        messages.scrollTop = messages.scrollHeight;
-
-        // Mergen yanıt simülasyonu
-        setTimeout(() => {
-            const aimMsg = document.createElement('div');
-            aimMsg.style.cssText = 'background: #1e3a8a; color: #ffffff; padding: 10px 14px; border-radius: 10px; max-width: 85%;';
-            
-            const ktugtokBilgi = {
-                baskan: "Feride Şahin",
-                baskanYardimcisi: "Berat Kurt",
-                etkinlikPlanlama: ["Azra Nur Delikkaya", "İlyas Söğütlü"],
-                malzemeSorumlusu: "Akif Serkan Dikmen",
-                egitimBirimi: ["İkbal Berra Özen", "Hale Nur Özkurt", "Fuat Filizkol"],
-                sponsorluk: ["Muhammed Özgür Girgin", "Mehmet Uğur Şahin"],
-                sosyalMedya: ["Güleser Bilgin", "Yusuf İslam Taşdemir", "Nazlı Sude Topal"],
-                instagram: "@ktuokculuk",
-                konum: "Antrenmanlarımızı Karadeniz Teknik Üniversitesi Sağlık, Kültür ve Spor Dairesi Başkanlığı (SKS) yanında bulunan Hasan Polat Kapalı Spor Salonu'nun alt katındaki okçuluk salonumuzda gerçekleştiriyoruz. 🏹📍"
-            };
-
-            const okculukTerimleri = {
-                "ok": "**Ok:** Eski Türkçe *uk / ok* kökünden türemiştir. 'Seğirtmek, fırlamak, hedef doğrultusunda gitmek' eylemleriyle ilişkilidir.",
-                "yay": "**Yay:** Eski Türkçe *yaymak* (germek, uzatmak) eyleminden gelir. Türk kompozit yayı; ahşap, manda boynuzu ve sinir bileşiminden oluşur.",
-                "kabza": "**Kabza:** Arapça *ḳbḍ* (tutmak, kavramak) kökünden gelir. Yayın el ile tutulan merkez kısmıdır.",
-                "kasan": "**Kasan:** Türkçe kökenlidir. Yayın eğrilik kazanan, kabza ile başlar arasındaki esnek omuz bölümüdür.",
-                "sal": "**Sal:** Yayın kabza ile kasan arasında kalan, atış esnasında bükülerek gücü depolayan gövde kanatlarıdır.",
-                "kiriş": "**Kiriş:** Eski Türkçe *ker- / kiriş* (germek) kökünden gelir. Yaya kurulan, oku fırlatıcı ana ip hattıdır.",
-                "zihgir": "**Zihgir (Çile Yüzüğü):** Farsça *zih* (kiriş) ve *gīr* (tutan) kelimelerinden türemiştir. Başparmak çekiş tekniğinde parmağı koruyan yüzüktür.",
-                "puta": "**Puta:** İçerisinde deri/saman doldurularak hedef haline getirilen armut biçimli geleneksel hedeflerdir.",
-                "tirkeş": "**Tirkeş (Sadak):** Okların konulduğu ve dökülmeden taşındığı özel deri kılıftır.",
-                "sadak": "**Sadak:** Eski Türkçe *sadaq* (muhafaza kılıfı) kelimesinden gelir.",
-                "kemankeş": "**Kemankeş:** Okçuluk tekkelerinde icazet almış liyakatli ustalara verilen unvandır.",
-                "menzil": "**Menzil:** Okun atılabildiği en uzak mesafe veya rekor atış alanlarıdır.",
-                "kepaze": "**Kepaze:** Okçuların kas yapısını güçlendirmek ve form tutmak için kullandığı yumuşak antrenman yaylarıdır.",
-                "çile": "**Çile:** Yayın ipine verilen isim olduğu gibi, okçunun ustalaşmak için katlandığı sabır sürecidir.",
-                "ya hak": "**Ya Hak!:** 'Hak olan Allah'ın adıyla!' anlamına gelir. Kadim okçular oku salarken bu zikri söyler."
-            };
-
-            let cevapMetni = "";
-            let soruMetni = soru.toLowerCase();
-
-            if (soruMetni.includes('nerede') || soruMetni.includes('nerde') || soruMetni.includes('konum') || soruMetni.includes('yer') || soruMetni.includes('salon') || soruMetni.includes('adres')) {
-                cevapMetni = ktugtokBilgi.konum;
-            } else {
-                let terimBulundu = false;
-                for (let terim in okculukTerimleri) {
-                    if (soruMetni.includes(terim)) {
-                        cevapMetni = okculukTerimleri[terim] + " 🏹📚";
-                        terimBulundu = true;
-                        break;
-                    }
-                }
-                if (!terimBulundu) {
-                    if (soruMetni.includes('başkan') || soruMetni.includes('baskan')) {
-                        if (soruMetni.includes('yardımcı') || soruMetni.includes('yardimci')) {
-                            cevapMetni = `Kulüp Başkan Yardımcımız **${ktugtokBilgi.baskanYardimcisi}**'dur. 🏹`;
-                        } else {
-                            cevapMetni = `Kulüp Başkanımız **${ktugtokBilgi.baskan}**'dir. 🎯`;
-                        }
-                    } else if (soruMetni.includes('eğitim') || soruMetni.includes('egitim') || soruMetni.includes('koç') || soruMetni.includes('antrenman')) {
-                        cevapMetni = `Eğitim birimi sorumlularımız: **${ktugtokBilgi.egitimBirimi.join(", ")}**'dur. Geleneksel okçuluk teknikleri ve eğitimlerimiz hakkında kendilerinden bilgi alabilirsin! 🏹🎯\n\n` + ktugtokBilgi.konum;
-                    } else if (soruMetni.includes('etkinlik') || soruMetni.includes('organizasyon') || soruMetni.includes('planlama')) {
-                        cevapMetni = `Etkinlik planlama sorumlularımız: **${ktugtokBilgi.etkinlikPlanlama.join(" ve ")}**'dır. 🎯`;
-                    } else if (soruMetni.includes('malzeme') || soruMetni.includes('ekipman')) {
-                        cevapMetni = `Malzeme sorumlumuz **${ktugtokBilgi.malzemeSorumlusu}**'dir. Yay ve ok ekipmanları hakkında kendisine danışabilirsin! 🏹`;
-                    } else if (soruMetni.includes('sponsor') || soruMetni.includes('destek')) {
-                        cevapMetni = `Sponsorluk sorumlularımız: **${ktugtokBilgi.sponsorluk.join(" ve ")}**'dir. 🤝🎯`;
-                    } else if (soruMetni.includes('instagram') || soruMetni.includes('sosyal medya') || soruMetni.includes('hesap')) {
-                        cevapMetni = `Sosyal medya ekibimiz: **${ktugtokBilgi.sosyalMedya.join(", ")}**'dır. Instagram hesabımız: **${ktugtokBilgi.instagram}** 📸🏹`;
-                    } else if (soruMetni.includes('mergen') || soruMetni.includes('kimsin')) {
-                        cevapMetni = "Ben **Mergen**! Türk mitolojisinde akıl, bilgelik ve bilgi tanrısıyım. Geleneksel Türk Okçuluğu Kulübü'nün (KTÜ GTOK) dijital bilgesi olarak sorularına yanıt vermek için buradayım! 🏹";
-                    } else if (soruMetni.includes('merhaba') || soruMetni.includes('selam')) {
-                        cevapMetni = "Oğuz'un ve Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk terimleri hakkında merak ettiğin bir soru var mı? 🎯";
-                    } else {
-                        cevapMetni = `Bu konuda yönetim kurulu size yardımcı olabilir. WhatsApp topluluğu üzerinden ilgilendiğiniz konuyla alakalı yetkili birimizle iletişime geçebilirsiniz:\n\n` +
-                                     `• **Genel Yönetim & Başkanlık:** Feride Şahin veya Berat Kurt\n` +
-                                     `• **Eğitim & Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol\n` +
-                                     `• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü\n` +
-                                     `• **Malzeme & Ekipman:** Akif Serkan Dikmen\n` +
-                                     `• **Sponsorluk & Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin\n` +
-                                     `• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal\n\n` +
-                                     `Hangi konuyla alakalı bilgi almak isterseniz yukarıdaki ekibimize ulaşabilirsiniz! 🎯🏹`;
-                    }
-                }
-            }
-            aimMsg.innerText = cevapMetni;
-            messages.appendChild(aimMsg);
-            messages.scrollTop = messages.scrollHeight;
-        }, 600);
-    }
+}
 </script>
-<!-- Mergen AI Bitişi -->
+<!-- Mergen AI Bitiş -->
 </body>
 </html>
