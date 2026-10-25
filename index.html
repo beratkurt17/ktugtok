@@ -472,7 +472,7 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* Sağ Alttaki Daire Widget Butonu (Telefonda ve PC'de mükemmel konum) */
+        /* Sağ Alttaki Daire Widget Butonu */
         #mergen-toggle-btn {
             position: fixed;
             bottom: 20px;
@@ -502,7 +502,7 @@
             object-fit: cover;
         }
 
-        /* Sohbet Penceresi (Telefonda tam ekran uyumlu, PC'de şık kutu) */
+        /* Sohbet Penceresi */
         #mergen-chat-container {
             position: fixed;
             bottom: 20px;
@@ -601,7 +601,7 @@
             font-weight: 500;
         }
 
-        /* Hazır Butonlar (Sitenin renk tonuna uyumlu) */
+        /* Hazır Butonlar */
         .button-group {
             display: flex;
             flex-direction: column;
@@ -669,7 +669,7 @@
 </head>
 <body>
 
-<!-- Sağ Alt Açılır Daire Widget Butonu (Logolu) -->
+<!-- Sağ Alt Açılır Daire Widget Butonu -->
 <div id="mergen-toggle-btn">
     <img src="logo.png" alt="Mergen AI Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png'">
 </div>
@@ -762,8 +762,153 @@ function checkEnter(e) {
     if (e.key === 'Enter') handleUserMessage();
 }
 
+// A'dan Z'ye Her Harf İçin En Çok Kullanılan Okçuluk Terimleri Veritabanı
+const etimolojikSozluk = {
+    // M Harfi (Mergen Dahil)
+    "mergen": "🏹 **Mergen (Etimolojik Köken):** Eski Türkçe ve Moğolca kökenli bir kelime olup 'bilge, keskin nişancı, usta, akıllı' anlamlarına gelir. Türk mitolojisinde isabetli karar almayı ve usta okçuluğu simgeler.",
+    "mandallama": "👌 **Mandallama:** Türk okçuluğunda başparmağın işaret parmağıyla kilitlenerek kirişin çekilmesi tekniğidir.",
+    "menzil": "🚩 **Menzil:** Okun atılabildiği en uzak mesafe ve bu mesafelerin ölçüldüğü özel okçuluk meydanıdır.",
+    "mayna": "⚓ **Mayna:** Yayın gerginliğini gevşetme ve çileyi çıkarma işlemidir.",
+    "müzeyyen": "✨ **Müzeyyen:** Üzeri altın veya tezhiple süslenmiş özel gösteriş yayıdır.",
+    "mandal": "💍 **Mandal:** Başparmak çekişinde kirişi tutan parmak kancasıdır.",
+    "mafsal": "🪵 **Mafsal:** Yayın büküm noktalarındaki eklem yeridir.",
+    "mekik": "🧵 **Mekik:** Kiriş örmede kullanılan sarma aracıdır.",
+    "mihver": "🎯 **Mihver:** Atış esnasında vücudun döndüğü merkez eksendir.",
+    "muhafız": "🛡️ **Muhafız:** Kolçak ve siperlerin genel adıdır.",
+
+    // Ç Harfi (Çile Dahil)
+    "çile": "🧵 **Çile (Etimolojik Köken):** Farsça 'çile' (kırk) kelimesinden gelir. Yayın kirişinin sarıldığı ipliklerin bükülme aşamasıdır.",
+    "çavuş": "🎯 **Çavuş:** Okçulukta atış sırasını ve meydan düzenini sağlayan görevlidir.",
+    "çelikus": "🏹 **Çelikus:** Geleneksel yaylarda esnekliği artıran ahşap katmandır.",
+    "çentik": "🎯 **Çentik:** Okun gezi ile yayın kirişine oturduğu oyuktur.",
+    "çarpma": "💥 **Çarpma:** Kirişin bırakıldığında yay gövdesine yaptığı darbedir.",
+    "çilekeş": "🧵 **Çilekeş:** Kiriş örme ve yay bakım işleriyle uğraşan ustadır.",
+    "çember": "🎯 **Çember:** Puta hedefindeki puan halkalarının eski adıdır.",
+    "çizgi": "📏 **Çizgi:** Puta atışlarında atış çizgisidir (paya).",
+    "çarpık": "🪵 **Çarpık:** Eğrilik gösteren kusurlu yay kanadıdır.",
+    "çubuk": "🌿 **Çubuk:** Ok şaftının ham ahşap halidir.",
+
+    // K Harfi
+    "kepaze": "🏹 **Kepaze (Etimolojik Köken):** Farsça 'kepāze' sözcüğünden gelir. Kas hafızası kazanmak için kullanılan esnek eğitim yayıdır.",
+    "kabza": "🪵 **Kabza (Etimolojik Köken):** Arapça 'kabz' (tutma) kökünden gelir. Yayın elle kavranan orta merkez noktasıdır.",
+    "kiriş": "🧵 **Kiriş:** Yayın iki ucunu gergin tutan bükümlü ip sistemidir.",
+    "kemankeş": "🎯 **Kemankeş:** Farsça keman (yay) ve keş (çeken) kelimelerinin birleşiminden oluşur.",
+    "kasan": "🎋 **Kasan:** Kabza ile sal arasındaki bükümlü geçiş bölgesidir.",
+    "kandil": "🔥 **Kandil:** Kabza ile kasan birleşimindeki anatomik dolgudur.",
+    "kuruntu": "🎯 **Kuruntu:** Yayın gerilerek kurulma işlemidir.",
+    "kulak": "👂 **Kulak:** Yayın iki uç kısmındaki kiriş başlıklarıdır.",
+    "kamış": "🌿 **Kamış:** Ok şaftı yapımında kullanılan hafif malzemedir.",
+    "koşam": "📏 **Koşam:** Geleneksel menzil ölçü birimidir.",
+
+    // Z Harfi
+    "zihgir": "💍 **Zihgir (Etimolojik Köken):** Farsça ze (kiriş) ve gīr (tutan) kelimelerinden türemiştir. Başparmak yüzüğüdür.",
+    "zehre": "📜 **Zehre:** Okçunun oklarını taşıdığı sadaktır.",
+    "zinde": "💪 **Zinde:** Atıcı kaslarının antrenmanlı ve güçlü olma halidir.",
+    "ziynet": "✨ **Ziynet:** Süslü ve işlemeli geleneksel yaylardır.",
+    "zarf": "📜 **Zarf:** Eski okçulukta derece ve sicil belgeleridir.",
+
+    // G Harfi
+    "gez": "🎯 **Gez (Etimolojik Köken):** Eski Türkçe gez (çentik) sözcüğünden gelir. Okun arka çentiğidir.",
+    "göğüs": "🛡️ **Göğüs:** Yayın atıcıya bakan ön yüzeyidir.",
+    "gezleme": "🎯 **Gezleme:** Oku kirişe oturtup nişan alma eylemidir.",
+    "girift": "🪵 **Girift:** Karmaşık yapılı kompozit yay gövdesidir.",
+    "gürz": "⚔️ **Gürz:** Tarihi okçuluk meydanlarında kullanılan ağırlık aletidir.",
+
+    // P Harfi
+    "pota": "🎯 **Pota:** Menzil okçuluğunda okların düştüğü hedef alanıdır.",
+    "pişrev": "🚀 **Pişrev:** En uzak mesafeye atılmak için tasarlanan menzil okudur.",
+    "paya": "📏 **Paya:** Atış çizgisinin geleneksel adıdır.",
+    "pazu": "💪 **Pazu:** Yay çekerken kullanılan kol kası gücüdür.",
+    " pul": "✨ **Pul:** Yayın üzerine takılan dekoratif süsleme pullarıdır.",
+
+    // T Harfi
+    "tir": "🏹 **Tir:** Farsça ok anlamına gelir.",
+    "tirkeş": "💼 **Tirkeş:** Okların konulduğu sadaktır.",
+    "tekke": "🏛️ **Okçular Tekkesi:** Osmanlı okçuluk ocağıdır.",
+    "tozkopan": "🏆 **Tozkopan:** Rekor kıran büyük okçulara verilen unvandır.",
+    "tabla": "🎯 **Tabla:** Hedef okçuluğunda hedef yüzeyidir.",
+
+    // S Harfi
+    "sadak": "💼 **Sadak:** Okların taşındığı muhafaza kabıdır.",
+    "sal": "🪵 **Sal:** Yayın esnek gövde kanadıdır.",
+    "siper": "🛡️ **Siper:** Sol eli koruyan aparat.",
+    "soya": "🪵 **Soya:** Kompozit yayların katman birleşimidir.",
+    "sopa": "🪵 **Sopa:** Eğitim amaçlı basit ahşap yaydır.",
+
+    // Y Harfi
+    "yay": "🏹 **Yay:** Ok fırlatma silahıdır.",
+    "yasağ": "📜 **Yasağ:** Okçuluk yarışma kurallarıdır.",
+    "yağmur": "🌧️ **Yağmur Atışı:** Toplu ok atma ritüelidir.",
+    " yelek": "🦺 **Yelek:** Kemankeşlerin giydiği geleneksel kıyafettir.",
+    " yiv": "🌀 **Yiv:** Ok şaftındaki dönme oluklarıdır.",
+
+    // A Harfi
+    "ayak": "🦶 **Ayak:** Atış esnasında duruş açısıdır.",
+    "ahşap": "🪵 **Ahşap:** Ok şaftı malzemesidir.",
+    "asma": "🏹 **Asma:** Kurulmuş yay durumudur.",
+    "akçe": "🪙 **Akçe:** Eski okçuluk yarışmalarında verilen ödül sikkesidir.",
+    "atış": "🎯 **Atış:** Okun yaydan bırakılma anıdır.",
+
+    // B Harfi
+    "boynuz": "🐃 **Boynuz:** Kompozit yay iç katmanıdır.",
+    "baş": "🔝 **Baş:** Yayın uç noktasıdır.",
+    "büküm": "🧵 **Büküm:** Kiriş burgusudur.",
+    "birlik": "🤝 **Birlik:** Okçuluk ocağı dayanışmasıdır.",
+    "beden": "🧍 **Beden:** Atıcının form duruşudur.",
+
+    // D Harfi
+    "darb": "💥 **Darb:** Okun hedefe çarpma şiddetidir.",
+    "demir": "⚙️ **Demir:** Ok temreninin metal kısmıdır.",
+    "direk": "🪵 **Direk:** Menzil taşlarının dikitleridir.",
+    "duvağ": "📜 **Duvağ:** Hedef tahtası örtüsüdür.",
+
+    // E Harfi
+    "erişim": "🚀 **Erişim:** Yayın menzil uzaklığıdır.",
+    "eğitim": "🎓 **Eğitim:** Kepaze ve teknik çalışmalarıdır.",
+    "esneme": "〰️ **Esneme:** Yayın çekiş esnasındaki esneklik payıdır.",
+
+    // F Harfi
+    "fiske": "👌 **Fiske:** Kirişin parmaktan kurtulma anındaki harekettir.",
+    "fersah": "📏 **Fersah:** Uzaklık ölçü birimidir.",
+    "form": "🧍 **Form:** Okçunun duruş ve teknik düzenidir.",
+
+    // H Harfi
+    "hedef": "🎯 **Hedef:** Okun atıldığı putadır.",
+    "hüner": "⭐ **Hüner:** Okçunun atış yeteneğidir.",
+    "hız": "⚡ **Hız:** Okun çıkış süratidir.",
+
+    // I Harfi
+    "irkilme": "⚡ **İrkilme:** Atış anındaki ani kasılmadır.",
+    "ışın": "☀️ **Işın:** Menzil okçuluğunda güneş açısı takibidir.",
+
+    // İ Harfi
+    "iğne": "📌 **İğne:** Ok temreninin sivri ucudur.",
+    "ip": "🧵 **İp:** Kirişin hammaddesidir.",
+    "iz": "👣 **İz:** Atış hattı takibidir.",
+
+    // L Harfi
+    "lale": "🌷 **Lale:** Kulak büküm şeklidir.",
+    " liva": "🚩 **Liva:** Okçuluk sancağıdır.",
+
+    // N Harfi
+    "nişangah": "🎯 **Nişangah:** Geleneksel okçulukta sezgisel nişan alma merkezidir.",
+    " nabız": "💓 **Nabız:** Atış öncesi sakinleşme kontrolüdür.",
+
+    // O Harfi
+    "ok": "🏹 **Ok:** Fırlatılan mühimmattır.",
+    "otağ": "⛺ **Otağ:** Kulüp buluşma çadırıdır.",
+
+    // R Harfi
+    "rekor": "🏆 **Rekor:** Menzil okçuluğundaki en uzun mesafe derecesidir.",
+    "rüzgar": "💨 **Rüzgar:** Atış yolunu etkileyen hava akımıdır.",
+
+    // V Harfi
+    "vuruş": "🎯 **Vuruş:** Hedefin tam merkezinin tutturulmasıdır.",
+    "vekil": "👥 **Vekil:** Kurul yardımcılarıdır."
+};
+
 function mergenCevapVer(soru) {
-    const s = soru.toLowerCase();
+    const s = soru.toLowerCase().trim();
 
     if (s.includes('hakkımızda')) {
         return "📌 **Hakkımızda:**\nKTÜ Geleneksel Türk Okçuluğu Kulübü (GTOK), ata sporumuz okçuluğu üniversitemizde yaşatmak, üyelerimize teknik eğitimler vermek ve geleneksel okçuluk kültürünü yaymak amacıyla faaliyet gösteren köklü bir topluluktur.";
@@ -777,22 +922,27 @@ function mergenCevapVer(soru) {
     else if (s.includes('danışman') || s.includes('öğretmen') || s.includes('hoca')) {
         return "🎓 **Danışman Öğretmenimiz:**\nKulübümüzün danışman hocası **Prof. Dr. Mehmet Kocabaş**'tır (Orman Fakültesi, Yaban Hayatı Ekolojisi ve Yönetimi Bölümü)[cite: 3]. Kendisi kulüp faaliyetlerimizde bizlere rehberlik etmektedir.";
     } 
-    else if (s.includes('terim') || s.includes('kelime') || s.includes('tabir')) {
-        return "📖 **Merak Edilen Okçuluk Terimleri:**\nGeleneksel okçulukta yüzlerce terim bulunur (Kepaze, Zihgir, Gez, Kabza, Kiriş vb.). Öğrenmek istediğin özel bir kelime varsa doğrudan bana yazabilir ya da detaylı terim sözlüğümüz için web sitemizi inceleyebilirsin!";
+    else if (s.includes('merak edilen terimler') || s.includes('terimler')) {
+        return "📖 **Merak Edilen Terimler:**\nA'dan Z'ye yüzlerce okçuluk terimi havuzumuzda mevcuttur! Hangi kelimeyi merak ediyorsun? (Örneğin: *Çile, Mergen, Kepaze, Zihgir, Gez, Kabza, Sadak, Mandallama, Menzil, Kemankeş* vb.) Kelimeyi doğrudan bana yazabilirsin, hemen kökenini açıklayayım! 🎯";
     } 
     else if (s.includes('iletişim') || s.includes('ulaş')) {
         return "📞 **İletişim ve Destek:**\nÖncelikle soralım: **KTÜ Geleneksel Okçuluk topluluğunun WhatsApp grubuna üye misin?**\n\n• Eğer **değilsen**, öncelikle grubumuza veya kulübümüze üye olmalısın.\n• Eğer **üyeysen**, topluluğun ana grubundan veya alt gruplarından yönetim kurulu ekibini üye etiketlerinden (admin/grup açıklaması) kolayca bulabilir ve WhatsApp üzerinden doğrudan yazabilirsin!";
     } 
     else if (s.includes('merhaba') || s.includes('selam')) {
-        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! 🏹 Merak ettiğin konuları butonlardan seçebilir veya bana yazabilirsin.";
+        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! 🏹 Merak ettiğin konuları butonlardan seçebilir veya kelime sorabilirsin.";
     } 
     else {
+        // A'dan Z'ye Genişletilmiş Sözlük Arama Motoru
+        for (let kelime in etimolojikSozluk) {
+            if (s.includes(kelime)) {
+                return etimolojikSozluk[kelime];
+            }
+        }
+        // Bulunamazsa istenen yönlendirme mesajı
         return "Bunu websitemizi daha iyi inceleyerek ulaşabilirsin ya da iletişimden yönetim kurulumuz ile irtibata geçebilirsin.";
     }
 }
 </script>
 
-</body>
-</html>
 </body>
 </html>
