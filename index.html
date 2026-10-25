@@ -456,184 +456,255 @@
 
   <!-- Kulüp Web Sitesi JS -->
   <script src="js/website.js?v=20261024_v15"></script><!-- Mergen AI - Geleneksel Türk Okçuluğu Asistanı Başlangıcı -->
-<!-- Gelişmiş Mergen AI Başlangıç -->
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mergen AI - KTÜ GTOK</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Sağ Alttaki Daire Widget Butonu (Telefonda ve PC'de mükemmel konum) */
+        #mergen-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #181b1f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 9998;
+            transition: transform 0.2s;
+            border: 2px solid #e3d5c1;
+        }
+
+        #mergen-toggle-btn:hover {
+            transform: scale(1.08);
+        }
+
+        #mergen-toggle-btn img {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Sohbet Penceresi (Telefonda tam ekran uyumlu, PC'de şık kutu) */
+        #mergen-chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 380px;
+            max-width: calc(100vw - 40px);
+            height: 540px;
+            max-height: calc(100vh - 40px);
+            background: #181b1f;
+            color: #f3f4f6;
+            border-radius: 16px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.4);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9999;
+            border: 1px solid #2f363d;
+        }
+
+        #mergen-header {
+            background: #1f242b;
+            color: #ffffff;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #2f363d;
+        }
+
+        #mergen-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e3d5c1;
+            background: #fff;
+        }
+
+        #mergen-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e3d5c1;
+        }
+
+        #mergen-status {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        #mergen-close-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 24px;
+            cursor: pointer;
+            margin-left: auto;
+            transition: color 0.2s;
+        }
+
+        #mergen-close-btn:hover {
+            color: #ffffff;
+        }
+
+        #mergen-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: #121417;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mergen-message {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: pre-line;
+        }
+
+        .bot-message {
+            background: #1f242b;
+            color: #f3f4f6;
+            align-self: flex-start;
+            border: 1px solid #2f363d;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .user-message {
+            background: #e3d5c1;
+            color: #181b1f;
+            align-self: flex-end;
+            font-weight: 500;
+        }
+
+        /* Hazır Butonlar (Sitenin renk tonuna uyumlu) */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .option-btn {
+            background: #181b1f;
+            color: #e3d5c1;
+            border: 1px solid #e3d5c1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            background: #e3d5c1;
+            color: #181b1f;
+        }
+
+        #mergen-input-area {
+            padding: 12px;
+            background: #1f242b;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #2f363d;
+        }
+
+        #mergen-user-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #374151;
+            background: #121417;
+            color: #ffffff;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #mergen-user-input:focus {
+            border-color: #e3d5c1;
+        }
+
+        #mergen-send-btn {
+            background: #e3d5c1;
+            color: #181b1f;
+            border: none;
+            padding: 0 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        #mergen-send-btn:hover {
+            background: #d1c2ad;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Sağ Alt Açılır Daire Widget Butonu (Logolu) -->
+<div id="mergen-toggle-btn">
+    <img src="logo.png" alt="Mergen AI Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png'">
+</div>
+
+<!-- Sohbet Kutusu -->
 <div id="mergen-chat-container">
     <div id="mergen-header">
-        <img src="halk/logo.png" alt="KTÜ GTOK Logo" id="mergen-avatar" onerror="this.style.display='none'">
+        <img id="mergen-avatar" src="logo.png" alt="Logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png'">
         <div>
             <h3>Mergen AI</h3>
-            <span id="mergen-status">Çevrimiçi | KTÜ GTOK Eğitim Birimi</span>
+            <div id="mergen-status">Çevrimiçi | KTÜ GTOK Eğitim Birimi</div>
         </div>
         <button id="mergen-close-btn">&times;</button>
     </div>
-    
+
     <div id="mergen-messages">
         <div class="mergen-message bot-message">
-            Oğuz'un ve Türk'ün kadim okuyla selam olsun! Ben Mergen. KTÜ Geleneksel Türk Okçuluğu Kulübü hakkında merak ettiğin her şeyi bana sorabilirsin! 🏹
+            Oğuz'un ve Türk'ün kadim okuyla selam olsun! Ben Mergen. KTÜ Geleneksel Türk Okçuluğu Kulübü asistanıyım. Sana nasıl yardımcı olabilirim? 🏹
+            
+            <div class="button-group">
+                <button class="option-btn" onclick="handleOption('Hakkımızda')">📌 Hakkımızda</button>
+                <button class="option-btn" onclick="handleOption('Antrenman Yeri Nerede')">📍 Antrenman Yeri Nerede?</button>
+                <button class="option-btn" onclick="handleOption('Yönetim Kurulu Üyeleri')">👥 Yönetim Kurulu Üyeleri</button>
+                <button class="option-btn" onclick="handleOption('Danışman Öğretmen')">🎓 Danışman Öğretmen</button>
+                <button class="option-btn" onclick="handleOption('Merak Edilen Terimler')">📖 Merak Edilen Terimler</button>
+                <button class="option-btn" onclick="handleOption('İletişim')">📞 İletişim</button>
+            </div>
         </div>
     </div>
-    
+
     <div id="mergen-input-area">
-        <input type="text" id="mergen-user-input" placeholder="Mergen'e bir şeyler sor...">
-        <button id="mergen-send-btn">Gönder</button>
+        <input type="text" id="mergen-user-input" placeholder="Mergen'e bir şeyler sor..." onkeypress="checkEnter(event)">
+        <button id="mergen-send-btn" onclick="handleUserMessage()">Gönder</button>
     </div>
 </div>
-
-<!-- Mergen Simgesi (Açma Butonu) -->
-<div id="mergen-toggle-btn">
-    <img src="halk/logo.png" alt="Mergen" onerror="this.style.display='none'">
-</div>
-
-<style>
-#mergen-chat-container {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 380px;
-    height: 520px;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    z-index: 9999;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    border: 1px solid #e1e4e8;
-}
-
-#mergen-header {
-    background: linear-gradient(135deg, #1b3b2b, #2c5e43);
-    color: white;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-#mergen-avatar, #mergen-toggle-btn img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255,255,255,0.8);
-    background: #fff;
-}
-
-#mergen-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-#mergen-status {
-    font-size: 11px;
-    color: #a8d5be;
-}
-
-#mergen-close-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 22px;
-    cursor: pointer;
-    margin-left: auto;
-}
-
-#mergen-messages {
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-    background: #f8f9fa;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.mergen-message {
-    max-width: 80%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.bot-message {
-    background: #ffffff;
-    color: #333;
-    align-self: flex-start;
-    border: 1px solid #e1e4e8;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-}
-
-.user-message {
-    background: #2c5e43;
-    color: white;
-    align-self: flex-end;
-}
-
-#mergen-input-area {
-    padding: 12px;
-    background: #ffffff;
-    display: flex;
-    gap: 8px;
-    border-top: 1px solid #e1e4e8;
-}
-
-#mergen-user-input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    outline: none;
-    font-size: 14px;
-}
-
-#mergen-user-input:focus {
-    border-color: #2c5e43;
-}
-
-#mergen-send-btn {
-    background: #2c5e43;
-    color: white;
-    border: none;
-    padding: 0 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
-}
-
-#mergen-send-btn:hover {
-    background: #1b3b2b;
-}
-
-#mergen-toggle-btn {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    width: 60px;
-    height: 60px;
-    background: #2c5e43;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    z-index: 9998;
-    transition: transform 0.2s;
-}
-
-#mergen-toggle-btn:hover {
-    transform: scale(1.05);
-}
-
-#mergen-toggle-btn img {
-    width: 50px;
-    height: 50px;
-}
-</style>
 
 <script>
 const toggleBtn = document.getElementById('mergen-toggle-btn');
@@ -666,6 +737,14 @@ function addMessage(text, sender) {
     messagesArea.scrollTop = messagesArea.scrollHeight;
 }
 
+function handleOption(optionText) {
+    addMessage(optionText, 'user');
+    setTimeout(() => {
+        const cevap = mergenCevapVer(optionText);
+        addMessage(cevap, 'bot');
+    }, 400);
+}
+
 function handleUserMessage() {
     const text = userInput.value.trim();
     if (!text) return;
@@ -676,35 +755,44 @@ function handleUserMessage() {
     setTimeout(() => {
         const cevap = mergenCevapVer(text);
         addMessage(cevap, 'bot');
-    }, 500);
+    }, 400);
 }
 
-if (sendBtn) sendBtn.addEventListener('click', handleUserMessage);
-if (userInput) {
-    userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleUserMessage();
-    });
+function checkEnter(e) {
+    if (e.key === 'Enter') handleUserMessage();
 }
 
-// Gelişmiş Mergen Akıllı Yanıt ve Karşılaştığı Her Soruya Çözüm Üreten Motoru
 function mergenCevapVer(soru) {
     const s = soru.toLowerCase();
 
-    if (s.includes('merhaba') || s.includes('selam')) {
-        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! KTÜ Geleneksel Türk Okçuluğu Kulübü hakkında merak ettiğin her şeyi bana sorabilirsin! 🏹";
-    } else if (s.includes('eğitim') || s.includes('antrenman') || s.includes('hale nur') || s.includes('ikbal') || s.includes('fuat')) {
-        return "Eğitim ve Antrenmanlar birimimiz için İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol ile iletişime geçebilirsin! 🏹";
-    } else if (s.includes('yönetim') || s.includes('başkan') || s.includes('kim')) {
-        return "Bu konuda yönetim kurulu sizlere yardımcı olabilir: <br>• **Genel Yönetim ve Başkanlık:** Feride Şahin veya Berat Kurt <br>• **Eğitim ve Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol <br>• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü <br>• **Malzeme & Ekipman:** Akif Serkan Dikmen <br>• **Sponsorluk ve Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin <br>• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal";
-    } else if (s.includes('okçuluk') || s.includes('başlamak') || s.includes('kayıt') || s.includes('üye') || s.includes('nasıl')) {
-        return "Geleneksel Türk okçuluğuna başlamak, ekipman temin etmek veya kulüp üyelik şartları hakkında en doğru bilgiyi Eğitim Birimi üyelerimizden (Hale Nur, İkbal veya Fuat) öğrenebilirsin! 🎯";
-    } else if (s.includes('instagram') || s.includes('sosyal medya') || s.includes('hesap')) {
-        return "Sosyal medya hesaplarımızı takip ederek tüm etkinlik ve duyurularımızdan anında haberdar olabilrisin! 📱💛";
-    } else {
-        return "Sorunu dikkatle inceledim! Kulübümüzün faaliyetleri, antrenman takvimi veya üyelik süreçleriyle ilgili bu detay için yönetim kurulumuz veya eğitim birimimiz (Hale Nur Özkurt, İkbal Berra Özen, Fuat Filizkol) sana memnuniyetle yardımcı olacaktır. Başka ne öğrenmek istersin? 🎯";
+    if (s.includes('hakkımızda')) {
+        return "📌 **Hakkımızda:**\nKTÜ Geleneksel Türk Okçuluğu Kulübü (GTOK), ata sporumuz okçuluğu üniversitemizde yaşatmak, üyelerimize teknik eğitimler vermek ve geleneksel okçuluk kültürünü yaymak amacıyla faaliyet gösteren köklü bir topluluktur.";
+    } 
+    else if (s.includes('antrenman') || s.includes('yer') || s.includes('salon')) {
+        return "📍 **Antrenman Yeri Nerede?**\nAntrenmanlarımız **Hasan Polat Kapalı Spor Salonu'nun alt katında** (giriş katının bir alt katı) gerçekleştirilmektedir. Katılmak veya saatleri öğrenmek için Eğitim Birimimizle görüşebilirsin!";
+    } 
+    else if (s.includes('yönetim') || s.includes('başkan')) {
+        return "👥 **Yönetim Kurulu Üyeleri:**\n\n• **Genel Yönetim & Başkanlık:** Feride Şahin, Berat Kurt\n• **Eğitim & Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt, Fuat Filizkol\n• **Etkinlik & Planlama:** Azra Nur Delikkaya, İlyas Söğütlü\n• **Malzeme & Ekipman:** Akif Serkan Dikmen\n• **Sponsorluk & Destek:** Muhammed Özgür Girgin, Mehmet Uğur Şahin\n• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir, Nazlı Sude Topal";
+    } 
+    else if (s.includes('danışman') || s.includes('öğretmen') || s.includes('hoca')) {
+        return "🎓 **Danışman Öğretmenimiz:**\nKulübümüzün danışman hocası **Prof. Dr. Mehmet Kocabaş**'tır (Orman Fakültesi, Yaban Hayatı Ekolojisi ve Yönetimi Bölümü)[cite: 3]. Kendisi kulüp faaliyetlerimizde bizlere rehberlik etmektedir.";
+    } 
+    else if (s.includes('terim') || s.includes('kelime') || s.includes('tabir')) {
+        return "📖 **Merak Edilen Okçuluk Terimleri:**\nGeleneksel okçulukta yüzlerce terim bulunur (Kepaze, Zihgir, Gez, Kabza, Kiriş vb.). Öğrenmek istediğin özel bir kelime varsa doğrudan bana yazabilir ya da detaylı terim sözlüğümüz için web sitemizi inceleyebilirsin!";
+    } 
+    else if (s.includes('iletişim') || s.includes('ulaş')) {
+        return "📞 **İletişim ve Destek:**\nÖncelikle soralım: **KTÜ Geleneksel Okçuluk topluluğunun WhatsApp grubuna üye misin?**\n\n• Eğer **değilsen**, öncelikle grubumuza veya kulübümüze üye olmalısın.\n• Eğer **üyeysen**, topluluğun ana grubundan veya alt gruplarından yönetim kurulu ekibini üye etiketlerinden (admin/grup açıklaması) kolayca bulabilir ve WhatsApp üzerinden doğrudan yazabilirsin!";
+    } 
+    else if (s.includes('merhaba') || s.includes('selam')) {
+        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! 🏹 Merak ettiğin konuları butonlardan seçebilir veya bana yazabilirsin.";
+    } 
+    else {
+        return "Bunu websitemizi daha iyi inceleyerek ulaşabilirsin ya da iletişimden yönetim kurulumuz ile irtibata geçebilirsin.";
     }
 }
 </script>
-<!-- Mergen AI Bitiş -->
+
+</body>
+</html>
 </body>
 </html>
