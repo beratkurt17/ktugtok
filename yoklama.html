@@ -507,6 +507,41 @@
 
           <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0;">
 
+          <!-- SUPABASE BULUT BAĞLANTISI -->
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+              <h3 style="font-size:1.05rem; color:#fff;">☁️ Supabase Bulut Bağlantısı</h3>
+              <div class="cloud-badge disconnected" id="settings-cloud-badge">
+                <span class="cloud-dot"></span>
+                <span id="settings-cloud-status">Bağlı Değil</span>
+              </div>
+            </div>
+            <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:1.25rem;">
+              Farklı cihazlardan aynı veriye erişmek için Supabase projenizin bilgilerini girin.
+            </p>
+            <div class="form-group">
+              <label class="form-label">Supabase Proje URL</label>
+              <input type="text" id="supabase-url-input" class="form-control" placeholder="https://xxxx.supabase.co">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Anon Public Key</label>
+              <input type="text" id="supabase-key-input" class="form-control" placeholder="sb_publishable_...">
+            </div>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1rem;">
+              <button class="btn btn-primary" id="btn-save-supabase">
+                <span id="btn-save-supabase-text">⚡ Test Et & Buluta Bağlan</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-disconnect-supabase" style="display:none; border-color:rgba(239,68,68,0.4); color:#f87171;">
+                🔌 Bağlantıyı Kes
+              </button>
+              <button class="btn btn-secondary" id="btn-sync-to-cloud" style="display:none;">
+                📤 Yerel Verileri Buluta Aktar
+              </button>
+            </div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid var(--border-color); margin: 2rem 0;">
+
           <div>
             <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #fff;">💾 Manuel Dosya Yedekleme</h3>
             <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1.25rem;">
