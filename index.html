@@ -441,10 +441,14 @@
     </div>
   </div>
 
-  <!-- Firebase Firestore Kütüphanesi (Google CDN - Türkiye'de erişilebilir) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-config.js?v=20261024_v1"></script>
+  <!-- Supabase Bulut Veritabanı Kütüphanesi & Yapılandırması -->
+  <script src="lib/supabase.js"></script>
+  <script>
+    if (typeof window.supabase === 'undefined' && typeof supabase !== 'undefined') {
+      window.supabase = supabase;
+    }
+  </script>
+  <script src="js/supabase-config.js?v=20261024_v14"></script>
 
   <!-- Yerel QR Kütüphanesi & Resmi Sporcu Veri Havuzu -->
   <script src="lib/qrcode.min.js?v=20261023_v13"></script>
