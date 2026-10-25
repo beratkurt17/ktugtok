@@ -1297,11 +1297,13 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   background: #0d1017;
   z-index: 999999;
-  padding: 1rem 1.25rem 3rem;
+  padding: 1.25rem;
+  padding-bottom: env(safe-area-inset-bottom, 2rem);
   flex-direction: column;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
