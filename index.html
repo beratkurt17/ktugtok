@@ -485,7 +485,6 @@
 </div>
 
 <style>
-/* Mergen Arayüz Stilleri - Eski Şık Tasarım Korundu */
 #mergen-chat-container {
     position: fixed;
     bottom: 25px;
@@ -637,7 +636,6 @@
 </style>
 
 <script>
-// Gelişmiş Mergen Mantığı ve Etkileşim Kodları
 const toggleBtn = document.getElementById('mergen-toggle-btn');
 const chatContainer = document.getElementById('mergen-chat-container');
 const closeBtn = document.getElementById('mergen-close-btn');
@@ -682,18 +680,17 @@ userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleUserMessage();
 });
 
-// Gelişmiş Bilgi ve Soru-Cevap Havuzu (Eğitim Birimi ve Yönetim Dahil)
 function mergenCevapVer(soru) {
     const s = soru.toLowerCase();
 
     if (s.includes('merhaba') || s.includes('selam')) {
-        return "Oğuz'un dan Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk şartları hakkında merak ettiğin bir soru var mı? 🏹";
+        return "Oğuz'un ve Türk'ün kadim okuyla selam olsun! Kulübümüz veya okçuluk şartları hakkında merak ettiğin bir soru var mı? 🏹";
     } else if (s.includes('eğitim') || s.includes('antrenman') || s.includes('hale nur') || s.includes('ikbal') || s.includes('fuat')) {
         return "Eğitim ve Antrenmanlar birimimiz için İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol ile iletişime geçebilirsin! 🏹";
     } else if (s.includes('yönetim') || s.includes('başkan') || s.includes('kim')) {
         return "Bu konuda yönetim kurulu sizlere yardımcı olabilir: <br>• **Genel Yönetim ve Başkanlık:** Feride Şahin veya Berat Kurt <br>• **Eğitim ve Antrenmanlar:** İkbal Berra Özen, Hale Nur Özkurt veya Fuat Filizkol <br>• **Etkinlik & Planlama:** Azra Nur Delikkaya veya İlyas Söğütlü <br>• **Malzeme & Ekipman:** Akif Serkan Dikmen <br>• **Sponsorluk ve Destek:** Muhammed Özgür Girgin veya Mehmet Uğur Şahin <br>• **Sosyal Medya & İletişim:** Güleser Bilgin, Yusuf İslam Taşdemir veya Nazlı Sude Topal";
     } else if (s.includes('instagram') || s.includes('sosyal medya') || s.includes('hesap')) {
-        return "Sosyal medya hesaplarımızı takip ederek en güncel etkinliklerimizden haberdar olabilirsin! 📱💛";
+        return "Sosyal medya hesaplarımızı takip ederek en güncel etkinliklerimizden haberdar olabilrisin! 📱💛";
     } else {
         return "Bu soruyla ilgili detaylı bilgiyi kulübümüzün ilgili yönetim birimlerinden öğrenebilirsin. Sana başka nasıl yardımcı olabilirim? 🎯";
     }
