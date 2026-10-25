@@ -171,14 +171,38 @@ const Scanner = {
     readerElement.innerHTML = '';
     this.html5QrCode = new Html5Qrcode("reader");
 
-    // Kayıtlı camera ID geçerliyse kullan, değilse environment facingMode
+    // Kullanıcı dropdown'dan bir kamera seçtiyse onu kullan
     const select = document.getElementById('camera-select');
     const selectedId = select && select.value && select.value !== '' ? select.value : null;
-    this.currentCameraId = selectedId;
 
-    const cameraConfig = this.currentCameraId
-      ? { deviceId: { exact: this.currentCameraId } }
-      : { facingMode: "environment" };
+    // Seçim yoksa kamera listesini tara ve arka kamerayı bul
+    let cameraConfig;
+    if (selectedId) {
+      this.currentCameraId = selectedId;
+      cameraConfig = { deviceId: { exact: selectedId } };
+    } else {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        const backCam = devices && devices.find(d =>
+          /back|arka|environment|rear|0/i.test(d.label)
+        );
+        if (backCam) {
+          this.currentCameraId = backCam.id;
+          cameraConfig = { deviceId: { exact: backCam.id } };
+        } else if (devices && devices.length > 0) {
+          // Birden fazla kamera varsa son olanı al (genellikle arka)
+          const cam = devices[devices.length - 1];
+          this.currentCameraId = cam.id;
+          cameraConfig = { deviceId: { exact: cam.id } };
+        } else {
+          this.currentCameraId = null;
+          cameraConfig = { facingMode: { exact: "environment" } };
+        }
+      } catch (_) {
+        this.currentCameraId = null;
+        cameraConfig = { facingMode: "environment" };
+      }
+    }
 
     const qrConfig = {
       fps: 25,
