@@ -2,8 +2,8 @@
 const SUPABASE_CONFIG_KEY = 'gtok_supabase_credentials_v1';
 
 const DEFAULT_SUPABASE_CONFIG = {
-  url: '',
-  anonKey: ''
+  url: 'https://tmgkkmttobketfkgzmcs.supabase.co',
+  anonKey: 'sb_publishable_maQ3wMcw7_YbWitk_hwHjQ_0oNP3TxX'
 };
 
 const SupabaseDB = {
