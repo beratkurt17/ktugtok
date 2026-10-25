@@ -1289,55 +1289,50 @@ body {
     padding: 1.5rem 1.25rem;
   }
 
-  /* Mobil Menü Çekmecesi (Burger Menü) */
-  .gtok-mobile-drawer {
-    display: none;
-    position: fixed;
-    top: 68px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(10, 12, 18, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    z-index: 99999;
-    padding: 1.25rem 1.25rem 2.5rem;
-    flex-direction: column;
-    overflow-y: auto;
-    border-top: 1px solid var(--gtok-border);
-  }
-  .gtok-mobile-drawer.open {
-    display: flex !important;
-    animation: drawerFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  @keyframes drawerFadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+}
 
-  .gtok-drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  }
-  .gtok-drawer-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--gtok-cream);
-  }
-  .gtok-drawer-close {
-    background: transparent;
-    border: none;
-    color: var(--gtok-text-muted);
-    font-size: 1.35rem;
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-  }
+/* Mobil Menü Çekmecesi — her zaman geçerli */
+.gtok-mobile-drawer {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #0d1017;
+  z-index: 999999;
+  padding: 1rem 1.25rem 3rem;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.gtok-mobile-drawer.open {
+  display: flex !important;
+}
+.gtok-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.gtok-drawer-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #d4a373;
+}
+.gtok-drawer-close {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  line-height: 1;
 }
 
 /* Drawer içerik stilleri — media query dışında, her zaman geçerli */
