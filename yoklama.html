@@ -441,6 +441,29 @@
         </p>
 
         <div class="excel-feature-cards">
+          <!-- Format 0: Sporcu Devam Raporu -->
+          <div class="excel-card">
+            <div>
+              <div class="excel-card-header">
+                <div class="excel-icon-box" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);color:#818cf8;">📈</div>
+                <div>
+                  <h3 style="font-size:1.1rem;color:#fff;">Sporcu Devam Raporu</h3>
+                  <p style="font-size:0.85rem;color:#94a3b8;margin-top:0.25rem;">
+                    Her sporcu için: kaç kez geldi, kaç kez beklendi, devam % ve devamsızlık sayısı. Son 12 ay.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;">
+              <button class="btn btn-primary" onclick="ExcelExporter.exportAttendanceReport('xlsx')" style="flex:1;">
+                <span>📥 Excel (.xlsx)</span>
+              </button>
+              <button class="btn btn-secondary" onclick="ExcelExporter.exportAttendanceReport('csv')">
+                <span>📄 CSV</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Format 1: Resmi Aylık Matris -->
           <div class="excel-card">
             <div>
