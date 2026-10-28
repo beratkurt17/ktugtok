@@ -180,35 +180,47 @@ const Scanner = {
       this.currentCameraId = selectedId;
       cameraConfig = { deviceId: { exact: selectedId } };
     } else {
+      // facingMode:exact ile tarayıcının arka kamera seçmesini zorla, sonra deviceId al
+      let backDeviceId = null;
       try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0) {
-          const BACK_KW  = ['back', 'arka', 'rear', 'environment', 'facing back', 'world'];
-          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
+        const s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: 'environment' } }
+        });
+        backDeviceId = s.getVideoTracks()[0]?.getSettings()?.deviceId || null;
+        s.getTracks().forEach(t => t.stop());
+      } catch (_) {}
 
-          // 1. Label'da açıkça "arka" geçen kamera
-          let picked = devices.find(d =>
-            BACK_KW.some(kw => (d.label || '').toLowerCase().includes(kw))
-          );
+      if (backDeviceId) {
+        this.currentCameraId = backDeviceId;
+        cameraConfig = { deviceId: { exact: backDeviceId } };
+        if (statusText) statusText.textContent = `Arka kamera seçildi (${backDeviceId.substring(0, 8)}...)`;
+      } else {
+        // deviceId alınamadı — label eşleştirmeye dön
+        try {
+          const devices = await Html5Qrcode.getCameras();
+          // Debug: hangi kameraları gördüğümüzü logla
+          console.log('[Kamera listesi]', JSON.stringify(devices.map(d => ({ label: d.label, id: d.id?.substring(0, 8) }))));
+          if (statusText) statusText.textContent = `${devices.length} kamera bulundu: ${devices.map(d => d.label || 'isimsiz').join(' | ')}`;
 
-          // 2. "Ön" geçmeyenlerin sonuncusu (label'lar boş veya eşleşmezse)
+          const BACK_KW  = ['back', 'arka', 'rear', 'environment', 'facing back'];
+          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front'];
+
+          let picked = devices.find(d => BACK_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
           if (!picked) {
-            const nonFront = devices.filter(d =>
-              !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw))
-            );
-            if (nonFront.length > 0) picked = nonFront[nonFront.length - 1];
+            const nonFront = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+            picked = nonFront.length > 0 ? nonFront[0] : null;
           }
+          if (!picked && devices.length > 0) picked = devices[0];
 
-          // 3. Tamamen bilinmiyorsa son kamerayı dene
-          if (!picked) picked = devices[devices.length - 1];
+          if (picked) {
+            this.currentCameraId = picked.id;
+            cameraConfig = { deviceId: { exact: picked.id } };
+          }
+        } catch (_) {}
 
-          this.currentCameraId = picked.id;
-          cameraConfig = { deviceId: { exact: picked.id } };
-        } else {
+        if (!cameraConfig) {
           cameraConfig = { facingMode: 'environment' };
         }
-      } catch (_) {
-        cameraConfig = { facingMode: 'environment' };
       }
     }
 
@@ -237,6 +249,7 @@ const Scanner = {
       );
 
       this.isScanning = true;
+      this._facingModeFallback = false;
       if (statusText) statusText.textContent = 'Kamera Aktif • QR Kodu Hedefe Gösterin';
       if (toggleBtn) {
         toggleBtn.innerHTML = '<span>⏹️ Kamerayı Kapat</span>';
@@ -261,13 +274,15 @@ const Scanner = {
       if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
         if (statusText) statusText.textContent = '🚫 Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini verin.';
       } else if (msg.includes('notfound') || msg.includes('nodevice') || msg.includes('overconstrained')) {
-        if (this.currentCameraId) {
-          // Belirli kamerayla başarısız → facingMode ile tekrar dene
+        if (this.currentCameraId && !this._facingModeFallback) {
+          // deviceId ile başarısız → facingMode:environment ile bir kez daha dene
           this.currentCameraId = null;
+          this._facingModeFallback = true;
           if (select) select.value = '';
-          if (statusText) statusText.textContent = '📷 Varsayılan kamerayla tekrar deneniyor...';
+          if (statusText) statusText.textContent = '📷 facingMode ile tekrar deneniyor...';
           setTimeout(() => this.start(), 500);
         } else {
+          this._facingModeFallback = false;
           if (statusText) statusText.textContent = '📷 Kamera bulunamadı. Cihazınızın kamera iznini kontrol edin.';
         }
       } else {
