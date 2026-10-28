@@ -355,6 +355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   AttendanceManager.init();
   Scanner.init();
   HistoryManager.init();
+  if (window.AttendanceTools) AttendanceTools.populateSessionSelect('bulk-entry-session');
 
   // URL Hash yönlendirmesi desteği (#ogrenciler, #tab-students, vb.)
   const hash = window.location.hash.replace('#', '');

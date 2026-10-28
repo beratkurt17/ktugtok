@@ -318,6 +318,57 @@
 
     <!-- SEKME 3: GEÇMİŞ GÜNLER & YOKLAMA DEFTERİ -->
     <section id="tab-history" class="tab-pane">
+
+      <!-- KART: Devamsızlık / Devam Durumu Sorgula -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <h2 class="card-title"><span class="icon">📊</span> Devamsızlık / Devam Durumu Sorgula</h2>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">
+          Sporcu no veya adıyla arama yapın — aylık katılım sayısı, beklenen seans ve devam yüzdesi görüntülenir.
+        </p>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <input type="text" id="absence-search-input" class="form-control" placeholder="Sporcu No veya Adı..." style="flex:1;min-width:200px;"
+            onkeydown="if(event.key==='Enter') AttendanceTools.runAbsenceQuery()">
+          <button class="btn btn-primary" onclick="AttendanceTools.runAbsenceQuery()">
+            <span>Sorgula</span>
+          </button>
+        </div>
+        <div id="absence-result-container"></div>
+      </div>
+
+      <!-- KART: Toplu Geçmiş Yoklama Girişi -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <h2 class="card-title"><span class="icon">📝</span> Toplu Geçmiş Yoklama Girişi</h2>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">
+          Geçmiş bir tarih ve seans seçin, gelen sporcuları işaretleyin, tek tuşla kaydedin.
+        </p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:1rem;">
+          <div class="form-group" style="margin:0;flex:1;min-width:150px;">
+            <label class="form-label">Tarih</label>
+            <input type="date" id="bulk-entry-date" class="form-control">
+          </div>
+          <div class="form-group" style="margin:0;flex:2;min-width:200px;">
+            <label class="form-label">Seans / Ders Grubu</label>
+            <select id="bulk-entry-session" class="form-control"
+              onclick="AttendanceTools.populateSessionSelect('bulk-entry-session')">
+              <option value="">— Seans Seçin —</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="AttendanceTools.loadBulkStudents()" style="white-space:nowrap;">
+            <span>Sporcuları Getir</span>
+          </button>
+        </div>
+        <div id="bulk-entry-students" style="margin-bottom:0.75rem;"></div>
+        <button id="bulk-entry-save" class="btn btn-success" style="display:none;width:100%;"
+          onclick="AttendanceTools.saveBulkEntry()">
+          <span>💾 Yoklamayı Kaydet</span>
+        </button>
+      </div>
+
+      <!-- KART: Tarihe Göre İncele -->
       <div class="card">
         <div class="card-header">
           <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
@@ -973,6 +1024,7 @@
   <script src="js/attendance.js?v=20261024_v15"></script>
   <script src="js/scanner.js?v=20261024_v15"></script>
   <script src="js/history.js?v=20261024_v15"></script>
+  <script src="js/attendance-tools.js?v=20261024_v16"></script>
   <script src="js/excel.js?v=20261024_v15"></script>
   <script src="js/app.js?v=20261024_v15"></script>
 </body>
