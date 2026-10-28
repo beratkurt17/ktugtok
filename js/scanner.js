@@ -186,12 +186,12 @@ const Scanner = {
     const select = document.getElementById('camera-select');
     const selectedId = select && select.value && select.value !== '' ? select.value : null;
 
+    // deviceId düz string olarak geçilir — { exact } constraint bazı cihazlarda OverconstrainedError verir
     let cameraConfig;
     if (selectedId) {
       this.currentCameraId = selectedId;
-      cameraConfig = { deviceId: { exact: selectedId } };
+      cameraConfig = selectedId;
     } else {
-      // getUserMedia ile önceden açmadan direkt label ile seç (çift açma → siyah ekran sorununu önler)
       try {
         const devices = await Html5Qrcode.getCameras();
         const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
@@ -204,7 +204,7 @@ const Scanner = {
 
         if (picked) {
           this.currentCameraId = picked.id;
-          cameraConfig = { deviceId: { exact: picked.id } };
+          cameraConfig = picked.id;
         }
       } catch (_) {}
 
@@ -260,22 +260,19 @@ const Scanner = {
       }
 
       const msg = String(err).toLowerCase();
+      // Hata detayını her zaman göster (debug için)
+      if (statusText) statusText.textContent = `HATA: ${err.name || ''} – ${err.message || err}`;
       if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
         if (statusText) statusText.textContent = '🚫 Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini verin.';
       } else if (msg.includes('notfound') || msg.includes('nodevice') || msg.includes('overconstrained')) {
         if (this.currentCameraId && !this._facingModeFallback) {
-          // deviceId ile başarısız → facingMode:environment ile bir kez daha dene
           this.currentCameraId = null;
           this._facingModeFallback = true;
           if (select) select.value = '';
-          if (statusText) statusText.textContent = '📷 facingMode ile tekrar deneniyor...';
           setTimeout(() => this.start(), 500);
         } else {
           this._facingModeFallback = false;
-          if (statusText) statusText.textContent = '📷 Kamera bulunamadı. Cihazınızın kamera iznini kontrol edin.';
         }
-      } else {
-        if (statusText) statusText.textContent = `⚠️ Kamera açılamadı: ${err.message || err}`;
       }
     }
   },
