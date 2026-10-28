@@ -180,48 +180,30 @@ const Scanner = {
       this.currentCameraId = selectedId;
       cameraConfig = { deviceId: { exact: selectedId } };
     } else {
-      // Kamera listesinden arka kamerayı bul
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
-          // 1. Label ile arka kamerayı ara
-          const backCam = devices.find(d => {
-            const label = (d.label || '').toLowerCase();
-            return label.includes('back') || label.includes('arka') ||
-                   label.includes('environment') || label.includes('rear');
-          });
+          const BACK_KW  = ['back', 'arka', 'rear', 'environment', 'facing back', 'world'];
+          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
 
-          if (backCam) {
-            this.currentCameraId = backCam.id;
-            cameraConfig = { deviceId: { exact: backCam.id } };
-          } else if (devices.length > 1) {
-            // 2. Label eşleşmezse: getCapabilities ile facingMode kontrol et
-            let foundByCapability = null;
-            for (const dev of devices) {
-              try {
-                const s = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: dev.id } } });
-                const track = s.getVideoTracks()[0];
-                const caps = track.getCapabilities ? track.getCapabilities() : {};
-                s.getTracks().forEach(t => t.stop());
-                if (caps.facingMode && caps.facingMode.includes('environment')) {
-                  foundByCapability = dev;
-                  break;
-                }
-              } catch (_) {}
-            }
+          // 1. Label'da açıkça "arka" geçen kamera
+          let picked = devices.find(d =>
+            BACK_KW.some(kw => (d.label || '').toLowerCase().includes(kw))
+          );
 
-            if (foundByCapability) {
-              this.currentCameraId = foundByCapability.id;
-              cameraConfig = { deviceId: { exact: foundByCapability.id } };
-            } else {
-              // 3. Genellikle son sıradaki kamera arka kameradır
-              const lastCam = devices[devices.length - 1];
-              this.currentCameraId = lastCam.id;
-              cameraConfig = { deviceId: { exact: lastCam.id } };
-            }
-          } else {
-            cameraConfig = { facingMode: 'environment' };
+          // 2. "Ön" geçmeyenlerin sonuncusu (label'lar boş veya eşleşmezse)
+          if (!picked) {
+            const nonFront = devices.filter(d =>
+              !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw))
+            );
+            if (nonFront.length > 0) picked = nonFront[nonFront.length - 1];
           }
+
+          // 3. Tamamen bilinmiyorsa son kamerayı dene
+          if (!picked) picked = devices[devices.length - 1];
+
+          this.currentCameraId = picked.id;
+          cameraConfig = { deviceId: { exact: picked.id } };
         } else {
           cameraConfig = { facingMode: 'environment' };
         }
