@@ -23,26 +23,37 @@ const Scanner = {
     if (!select || !window.Html5Qrcode) return;
     try {
       const devices = await Html5Qrcode.getCameras();
-      if (devices && devices.length) {
-        const currentId = this.currentCameraId;
-        select.innerHTML = '<option value="">Otomatik Seç</option>';
-        devices.forEach((dev, idx) => {
-          const opt = document.createElement('option');
-          opt.value = dev.id;
-          opt.textContent = dev.label || `Kamera ${idx + 1}`;
-          select.appendChild(opt);
-        });
-        const backCam = devices.find(d =>
-          d.label.toLowerCase().includes('back') ||
-          d.label.toLowerCase().includes('arka') ||
-          d.label.toLowerCase().includes('environment')
-        );
-        if (currentId && devices.find(d => d.id === currentId)) {
-          select.value = currentId;
-        } else if (backCam) {
-          select.value = backCam.id;
-        }
-        this.currentCameraId = select.value || null;
+      if (!devices || !devices.length) return;
+
+      const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
+      const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
+
+      const frontCams = devices.filter(d => FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+      const backCams  = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+
+      // Extra keyword içermeyen arka kamera = ana kamera; yoksa ilk arka kamera
+      const mainBack  = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw))) || backCams[0];
+      const mainFront = frontCams[0];
+
+      select.innerHTML = '';
+      if (mainBack) {
+        const opt = document.createElement('option');
+        opt.value = mainBack.id;
+        opt.textContent = 'Arka Kamera';
+        select.appendChild(opt);
+      }
+      if (mainFront) {
+        const opt = document.createElement('option');
+        opt.value = mainFront.id;
+        opt.textContent = 'Ön Kamera';
+        select.appendChild(opt);
+      }
+
+      if (this.currentCameraId && select.querySelector(`option[value="${CSS.escape(this.currentCameraId)}"]`)) {
+        select.value = this.currentCameraId;
+      } else if (mainBack) {
+        select.value = mainBack.id;
+        this.currentCameraId = mainBack.id;
       }
     } catch (err) {
       console.warn('Kamera listesi alınamadı:', err);
@@ -193,23 +204,18 @@ const Scanner = {
       if (backDeviceId) {
         this.currentCameraId = backDeviceId;
         cameraConfig = { deviceId: { exact: backDeviceId } };
-        alert('DEBUG - Arka kamera (exact):\n' + backDeviceId.substring(0, 20));
       } else {
         // deviceId alınamadı — label eşleştirmeye dön
         try {
           const devices = await Html5Qrcode.getCameras();
-          const debugInfo = devices.map((d, i) => `${i}: "${d.label || 'isimsiz'}"`).join('\n');
-          alert('DEBUG - Kamera listesi:\n' + debugInfo);
+          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
+          const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
 
-          const BACK_KW  = ['back', 'arka', 'rear', 'environment', 'facing back'];
-          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front'];
-
-          let picked = devices.find(d => BACK_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-          if (!picked) {
-            const nonFront = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-            picked = nonFront.length > 0 ? nonFront[0] : null;
-          }
-          if (!picked && devices.length > 0) picked = devices[0];
+          const backCams = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+          // Önce ultra/wide olmayan ana arka kamera; yoksa ilk arka kamera
+          const picked = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw)))
+            || backCams[0]
+            || devices[0];
 
           if (picked) {
             this.currentCameraId = picked.id;
