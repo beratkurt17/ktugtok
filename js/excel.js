@@ -242,67 +242,84 @@ const ExcelExporter = {
     this.saveFile(wb, ws, filename, format);
   },
 
-  // 3. Her Ders / Seans için Ayrı Sheet — Aylık Matris
+  // 3. Her Ders / Seans için Ayrı Sheet — Haftalık Yoklama Defteri
   async exportMatrixBySession() {
     if (!window.XLSX && !(await this.ensureXLSX())) {
       alert('Excel kütüphanesi yüklenemedi. Lütfen sayfayı yenileyiniz.');
       return;
     }
 
-    const monthInput = document.getElementById('excel-month-select')?.value || new Date().toISOString().slice(0, 7);
-    const [yearStr, monthStr] = monthInput.split('-');
-    const year  = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10);
-    const daysInMonth = new Date(year, month, 0).getDate();
-
     const sessions   = Storage.getSessions();
     const students   = Storage.getStudents();
     const attendance = Storage.getAttendance();
     const settings   = Storage.getSettings();
-
-    const monthNames = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    const today      = new Date().toISOString().slice(0, 10);
 
     const wb = XLSX.utils.book_new();
     let sheetsAdded = 0;
 
     for (const session of sessions) {
-      const sesStudents = students.filter(s =>
-        (s.session || '').trim().toLowerCase() === (session.name || '').trim().toLowerCase()
-      ).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
+      const sesStudents = students
+        .filter(s => (s.session || '').trim().toLowerCase() === (session.name || '').trim().toLowerCase())
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
 
       if (sesStudents.length === 0) continue;
 
-      // Başlık satırları
-      const titleRow   = [`${settings.clubName || 'OKÇULUK KULÜBÜ'} — ${session.name} — AYLIK YOKLAMA ÇİZELGESİ`];
-      const subTitle   = [`Dönem: ${monthNames[month]} ${year}  |  Rapor: ${new Date().toLocaleDateString('tr-TR')}`];
-      const headers    = ['Sıra', 'Sporcu No', 'Adı Soyadı', 'Kategori'];
-      for (let d = 1; d <= daysInMonth; d++) headers.push(`${d}`);
-      headers.push('Toplam');
+      // Bu seansın öğrencilerine ait tüm tarihleri al (yoklama tarihlerine göre haftalar)
+      const studentIds = new Set(sesStudents.map(s => s.id));
+      const sessionDates = [...new Set(
+        attendance.filter(a => studentIds.has(a.studentId)).map(a => a.date)
+      )].sort();
 
-      const rows = sesStudents.map((st, idx) => {
-        const row = [idx + 1, st.id, st.name, st.category || 'Genel'];
-        let total = 0;
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const came = attendance.some(a => a.studentId === st.id && a.date === dateStr);
-          row.push(came ? 'G' : '-');
-          if (came) total++;
-        }
-        row.push(total);
-        return row;
+      const weekCount = sessionDates.length;
+      const sesDay    = session.day  || '';
+      const sesTime   = session.time || '';
+
+      // Satır 1: Başlık
+      const titleRow = [`GTOK ANTRENMAN YOKLAMA LİSTESİ - ${session.name}${sesDay ? ` (${sesDay}${sesTime ? ' ' + sesTime : ''})` : ''}`];
+      // Satır 2: Bilgi + işaret açıklaması
+      const infoRow  = [
+        `Ders Günü: ${sesDay || '—'} | Saat: ${sesTime || '—'}`,
+        '', '',
+        'Yoklama İşaretleri: [X] Katıldı  [G] Geç Kaldı  [İ] İzinli  [-] Gelmedi'
+      ];
+      // Satır 3: Boş
+      // Satır 4: Başlıklar
+      const headers = ['No', 'İsim Soyisim', 'Ders Zamanı',
+        ...sessionDates.map((_, i) => `${i + 1}. Hafta`),
+        'Katılım (Gün)', 'Katılım Oranı'
+      ];
+
+      // Öğrenci satırları
+      const weeklyAttended = new Array(weekCount).fill(0);
+      const studentRows = sesStudents.map((st, idx) => {
+        const attended = new Set(attendance.filter(a => a.studentId === st.id).map(a => a.date));
+        const marks = sessionDates.map((d, wi) => {
+          if (attended.has(d)) { weeklyAttended[wi]++; return 'X'; }
+          return '';
+        });
+        const totalDays = marks.filter(m => m === 'X').length;
+        const rate = weekCount > 0 ? `%${Math.round(totalDays / weekCount * 100)}` : '%0';
+        return [idx + 1, st.name, sesTime || session.name, ...marks, totalDays, rate];
       });
 
-      const wsData = [titleRow, subTitle, [], headers, ...rows];
+      // Son satır: Haftalık katılan sporcu sayısı
+      const totalAll = weeklyAttended.reduce((a, b) => a + b, 0);
+      const avgRate  = (weekCount > 0 && sesStudents.length > 0)
+        ? `%${Math.round(totalAll / (weekCount * sesStudents.length) * 100)}`
+        : '%0';
+      const footerRow = ['', 'Haftalık Katılan Sporcu Sayısı', '', ...weeklyAttended, totalAll, avgRate];
+
+      const wsData = [titleRow, infoRow, [], headers, ...studentRows, [], footerRow];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-      const colWidths = [{ wch: 6 }, { wch: 14 }, { wch: 26 }, { wch: 22 }];
-      for (let d = 0; d < daysInMonth; d++) colWidths.push({ wch: 4 });
-      colWidths.push({ wch: 8 });
+      const colWidths = [{ wch: 5 }, { wch: 26 }, { wch: 18 }];
+      sessionDates.forEach(() => colWidths.push({ wch: 9 }));
+      colWidths.push({ wch: 14 }, { wch: 13 });
       ws['!cols'] = colWidths;
 
       const sheetName = (session.name || `Seans${sheetsAdded + 1}`)
-        .slice(0, 31)
-        .replace(/[:\\\/\?\*\[\]]/g, '_');
+        .slice(0, 31).replace(/[:\\\/\?\*\[\]]/g, '_');
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
       sheetsAdded++;
     }
@@ -312,8 +329,7 @@ const ExcelExporter = {
       return;
     }
 
-    const filename = `${settings.clubCode || 'GTOK'}_Ders_Bazli_Yoklama_${year}_${String(month).padStart(2,'0')}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    XLSX.writeFile(wb, `${settings.clubCode || 'GTOK'}_Haftalik_Yoklama_${today}.xlsx`);
   },
 
   // 4. Tüm Kayıtlı Üyeleri / Okçuları Dışa Aktar (CSV veya XLSX)
