@@ -191,41 +191,25 @@ const Scanner = {
       this.currentCameraId = selectedId;
       cameraConfig = { deviceId: { exact: selectedId } };
     } else {
-      // facingMode:exact ile tarayıcının arka kamera seçmesini zorla, sonra deviceId al
-      let backDeviceId = null;
+      // getUserMedia ile önceden açmadan direkt label ile seç (çift açma → siyah ekran sorununu önler)
       try {
-        const s = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: 'environment' } }
-        });
-        backDeviceId = s.getVideoTracks()[0]?.getSettings()?.deviceId || null;
-        s.getTracks().forEach(t => t.stop());
+        const devices = await Html5Qrcode.getCameras();
+        const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
+        const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
+
+        const backCams = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+        const picked = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw)))
+          || backCams[0]
+          || devices[0];
+
+        if (picked) {
+          this.currentCameraId = picked.id;
+          cameraConfig = { deviceId: { exact: picked.id } };
+        }
       } catch (_) {}
 
-      if (backDeviceId) {
-        this.currentCameraId = backDeviceId;
-        cameraConfig = { deviceId: { exact: backDeviceId } };
-      } else {
-        // deviceId alınamadı — label eşleştirmeye dön
-        try {
-          const devices = await Html5Qrcode.getCameras();
-          const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
-          const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
-
-          const backCams = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-          // Önce ultra/wide olmayan ana arka kamera; yoksa ilk arka kamera
-          const picked = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw)))
-            || backCams[0]
-            || devices[0];
-
-          if (picked) {
-            this.currentCameraId = picked.id;
-            cameraConfig = { deviceId: { exact: picked.id } };
-          }
-        } catch (_) {}
-
-        if (!cameraConfig) {
-          cameraConfig = { facingMode: 'environment' };
-        }
+      if (!cameraConfig) {
+        cameraConfig = { facingMode: 'environment' };
       }
     }
 
