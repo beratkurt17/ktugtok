@@ -48,96 +48,152 @@ const AttendanceTools = {
   },
 
   _renderStudentStats(student) {
+    const MONTH_NAMES = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    const TURK_DAYS  = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+    const DAY_MAP    = { PAZARTESI:1, SALI:2, ÇARŞAMBA:3, PERŞEMBE:4, CUMA:5, CUMARTESİ:6, PAZAR:0 };
+
     const attendance = Storage.getAttendance();
-    const records = attendance
-      .filter(a => a.studentId === student.id)
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const records    = attendance.filter(a => a.studentId === student.id);
+    // date → kayıt
+    const recByDate  = {};
+    records.forEach(r => { recByDate[r.date] = r; });
 
-    // Aylara göre grupla
-    const byMonth = {};
-    records.forEach(r => {
-      const m = r.date.substring(0, 7);
-      if (!byMonth[m]) byMonth[m] = [];
-      byMonth[m].push(r);
-    });
-
-    // Öğrencinin seansından haftalık gün çıkar (beklenen seans sayısı için)
-    const sessions = Storage.getSessions();
-    const session = sessions.find(s =>
+    // Öğrencinin seansından haftalık gün al
+    const sessions   = Storage.getSessions();
+    const session    = sessions.find(s =>
       (s.name || '').trim().toLowerCase() === (student.session || '').trim().toLowerCase()
     );
-    const DAY_MAP = { PAZARTESI:1, SALI:2, ÇARŞAMBA:3, PERŞEMBE:4, CUMA:5, CUMARTESİ:6, PAZAR:0 };
-    const sessionDayNum = session?.day ? (DAY_MAP[session.day.toUpperCase().replace('İ','I')] ?? null) : null;
+    const sessionDayNum = session?.day
+      ? (DAY_MAP[session.day.toUpperCase().replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G')] ?? null)
+      : null;
 
-    const MONTH_NAMES = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-    const months = Object.keys(byMonth).sort();
+    // Gösterim aralığı: ilk kayıttan veya max 12 ay geriden bugüne
+    const today = new Date(); today.setHours(0,0,0,0);
+    const earliest = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+    let startDate = new Date(earliest);
+    if (records.length > 0) {
+      const firstRec = new Date([...records].sort((a,b)=>a.date.localeCompare(b.date))[0].date);
+      if (firstRec < startDate) startDate = firstRec < earliest ? earliest : firstRec;
+    }
 
+    // ── Beklenen seans günleri (haftalık, her X günü) ───────────────────────
+    let sections = [];           // { monthLabel, dates: [{date, came}], attended, expected }
     let totalAttended = 0, totalExpected = 0;
 
-    const rows = months.map(m => {
-      const [y, mo] = m.split('-').map(Number);
-      const attended = byMonth[m].length;
-      totalAttended += attended;
+    if (sessionDayNum !== null) {
+      // Başlangıç tarihinden itibaren o haftanın günlerini üret
+      const cursor = new Date(startDate);
+      while (cursor.getDay() !== sessionDayNum) cursor.setDate(cursor.getDate() + 1);
 
-      let expected = null;
-      if (sessionDayNum !== null) {
-        const daysInMonth = new Date(y, mo, 0).getDate();
-        let cnt = 0;
-        for (let d = 1; d <= daysInMonth; d++) {
-          if (new Date(y, mo - 1, d).getDay() === sessionDayNum) cnt++;
-        }
-        expected = cnt;
-        totalExpected += cnt;
+      const monthMap = {};
+      while (cursor <= today) {
+        const iso = cursor.toISOString().slice(0,10);
+        const m   = iso.substring(0,7);
+        if (!monthMap[m]) monthMap[m] = [];
+        monthMap[m].push(iso);
+        cursor.setDate(cursor.getDate() + 7);
       }
 
-      const pct = (expected !== null && expected > 0) ? Math.round(attended / expected * 100) : null;
-      const clr = pct === null ? '#94a3b8' : pct >= 75 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#f43f5e';
-
-      return `<tr style="border-bottom:1px solid var(--border-color);">
-        <td style="padding:0.45rem 0.75rem;">${MONTH_NAMES[mo]} ${y}</td>
-        <td style="padding:0.45rem 0.75rem;color:#10b981;font-weight:600;">${attended}</td>
-        <td style="padding:0.45rem 0.75rem;color:#94a3b8;">${expected ?? '—'}</td>
-        <td style="padding:0.45rem 0.75rem;">
-          ${pct !== null
-            ? `<span style="color:${clr};font-weight:700;">%${pct}</span>`
-            : '<span style="color:#64748b;">—</span>'}
-        </td>
-      </tr>`;
-    }).join('');
+      // Ay gruplarını yeniden eskiye sırala
+      Object.entries(monthMap).sort(([a],[b]) => b.localeCompare(a)).forEach(([m, dates]) => {
+        const [y,mo] = m.split('-').map(Number);
+        const att = dates.filter(d => recByDate[d]).length;
+        totalAttended += att;
+        totalExpected += dates.length;
+        sections.push({
+          monthLabel: `${MONTH_NAMES[mo]} ${y}`,
+          dates: dates.map(d => ({ date: d, came: !!recByDate[d], time: recByDate[d]?.time })),
+          attended: att,
+          expected: dates.length
+        });
+      });
+    } else {
+      // Seans günü bilinmiyor — sadece mevcut kayıtları göster
+      const monthMap = {};
+      records.forEach(r => {
+        const m = r.date.substring(0,7);
+        if (!monthMap[m]) monthMap[m] = [];
+        monthMap[m].push(r.date);
+      });
+      totalAttended = records.length;
+      Object.entries(monthMap).sort(([a],[b]) => b.localeCompare(a)).forEach(([m, dates]) => {
+        const [y,mo] = m.split('-').map(Number);
+        sections.push({
+          monthLabel: `${MONTH_NAMES[mo]} ${y}`,
+          dates: dates.sort().map(d => ({ date: d, came: true, time: recByDate[d]?.time })),
+          attended: dates.length,
+          expected: null
+        });
+      });
+    }
 
     const overallPct = totalExpected > 0 ? Math.round(totalAttended / totalExpected * 100) : null;
     const opClr = overallPct === null ? '#94a3b8' : overallPct >= 75 ? '#10b981' : overallPct >= 50 ? '#f59e0b' : '#f43f5e';
 
+    // ── HTML ────────────────────────────────────────────────────────────────
+    let sectionsHtml = '';
+    if (sections.length === 0) {
+      sectionsHtml = '<p style="color:#64748b;font-size:0.88rem;padding:0.5rem 0;">Henüz yoklama kaydı bulunmuyor.</p>';
+    } else {
+      sections.forEach(sec => {
+        const pct  = sec.expected ? Math.round(sec.attended / sec.expected * 100) : null;
+        const sClr = pct === null ? '#94a3b8' : pct >= 75 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#f43f5e';
+
+        let datesHtml = sec.dates.map(item => {
+          const d    = new Date(item.date);
+          const day  = item.date.slice(8,10);
+          const dName = TURK_DAYS[d.getDay()];
+          return `
+            <div style="display:flex;align-items:center;gap:0.6rem;padding:0.22rem 0.5rem;border-radius:4px;
+              background:${item.came ? 'rgba(16,185,129,0.05)' : 'transparent'};">
+              <span style="font-size:1rem;width:1.1rem;text-align:center;color:${item.came ? '#10b981' : '#f43f5e'};">
+                ${item.came ? '✓' : '✗'}
+              </span>
+              <span style="font-size:0.86rem;color:${item.came ? '#e2e8f0' : '#94a3b8'};">
+                ${day} ${sec.monthLabel.split(' ')[0]} <span style="color:#64748b;">${dName}</span>
+              </span>
+              ${item.came && item.time ? `<span style="font-size:0.75rem;color:#64748b;margin-left:auto;">${item.time}</span>` : ''}
+            </div>`;
+        }).join('');
+
+        sectionsHtml += `
+          <div style="margin-bottom:0.85rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;
+              padding:0.3rem 0.5rem;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:0.25rem;">
+              <span style="font-weight:700;color:#cbd5e1;font-size:0.9rem;">${sec.monthLabel}</span>
+              <span style="font-size:0.85rem;">
+                <span style="color:#10b981;font-weight:600;">${sec.attended}</span>
+                <span style="color:#64748b;">/${sec.expected ?? '?'}</span>
+                ${pct !== null ? `<span style="color:${sClr};font-weight:700;margin-left:0.4rem;">%${pct}</span>` : ''}
+              </span>
+            </div>
+            ${datesHtml}
+          </div>`;
+      });
+    }
+
     return `
-      <div style="margin-top:1rem;padding:1rem 1.1rem;background:rgba(255,255,255,0.02);border:1px solid var(--border-color);border-radius:var(--radius-md);">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.9rem;">
+      <div style="margin-top:1rem;padding:1rem 1.1rem;background:rgba(255,255,255,0.02);
+        border:1px solid var(--border-color);border-radius:var(--radius-md);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
           <div>
             <div style="font-size:1.05rem;font-weight:700;color:#fff;">${this.escapeHtml(student.name)}</div>
-            <div style="font-size:0.8rem;color:#64748b;margin-top:0.15rem;">${student.id} · ${this.escapeHtml(student.session || 'Seans atanmamış')}</div>
+            <div style="font-size:0.8rem;color:#64748b;margin-top:0.15rem;">
+              ${student.id} · ${this.escapeHtml(student.session || 'Seans atanmamış')}
+              ${totalExpected ? ` · <span style="color:#94a3b8;">${totalAttended}/${totalExpected} katılım</span>` : ''}
+            </div>
           </div>
           ${overallPct !== null ? `
-            <div style="text-align:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:0.35rem 0.9rem;">
+            <div style="text-align:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);
+              border-radius:8px;padding:0.35rem 0.9rem;">
               <div style="font-size:1.45rem;font-weight:800;color:${opClr};">%${overallPct}</div>
               <div style="font-size:0.7rem;color:#94a3b8;">Genel Devam</div>
             </div>` : ''}
         </div>
-
-        ${months.length === 0
-          ? '<p style="color:#64748b;font-size:0.88rem;">Henüz yoklama kaydı bulunmuyor.</p>'
-          : `<table style="width:100%;border-collapse:collapse;font-size:0.86rem;">
-              <thead>
-                <tr style="border-bottom:2px solid var(--border-color);color:#64748b;">
-                  <th style="padding:0.35rem 0.75rem;text-align:left;">Ay</th>
-                  <th style="padding:0.35rem 0.75rem;text-align:left;">Geldi</th>
-                  <th style="padding:0.35rem 0.75rem;text-align:left;">Beklenen</th>
-                  <th style="padding:0.35rem 0.75rem;text-align:left;">Devam %</th>
-                </tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-            <div style="margin-top:0.5rem;font-size:0.8rem;color:#64748b;">
-              Toplam: ${totalAttended} katılım${totalExpected ? ` / ${totalExpected} beklenen` : ''}
-            </div>`}
+        ${sectionsHtml}
+        ${sessionDayNum === null && student.session
+          ? '<p style="font-size:0.78rem;color:#64748b;margin-top:0.5rem;">⚠️ Seans gün bilgisi yok — beklenen seans hesaplanamıyor.</p>'
+          : ''}
       </div>`;
   },
 
