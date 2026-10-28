@@ -970,19 +970,19 @@ window.openUploadModal = function() {
       Dijital Arşive Fotoğraf Yükle
     </h3>
     <p style="font-size:0.85rem; color:var(--gtok-text-muted); margin-bottom:1.5rem;">
-      Kulüp antrenmanı, yarışma veya etkinlik fotoğraflarını arşiv sistemine kaydedin.
+      Tek veya birden fazla fotoğraf seçebilirsiniz.
     </p>
 
     <form id="upload-photo-form">
       <div class="modal-form-group">
-        <label class="modal-form-label" for="photo-file">Fotoğraf Dosyası Seç *</label>
-        <input type="file" id="photo-file" class="modal-form-input" accept="image/*" required>
-        <small style="color:var(--gtok-text-dim); font-size:0.75rem; display:block; margin-top:0.25rem;">PNG, JPG veya WEBP formatında görsel seçiniz.</small>
+        <label class="modal-form-label" for="photo-file">Fotoğraf Seç (çoklu seçim desteklenir) *</label>
+        <input type="file" id="photo-file" class="modal-form-input" accept="image/*" multiple required>
+        <small style="color:var(--gtok-text-dim); font-size:0.75rem; display:block; margin-top:0.25rem;">PNG, JPG veya WEBP · Ctrl/Cmd ile birden fazla seçin.</small>
       </div>
 
       <div class="modal-form-group">
-        <label class="modal-form-label" for="photo-title">Başlık / Etkinlik Adı *</label>
-        <input type="text" id="photo-title" class="modal-form-input" placeholder="Örn: 2026 Güz Dönemi Sezon Açılışı" required>
+        <label class="modal-form-label" for="photo-title">Başlık / Etkinlik Adı</label>
+        <input type="text" id="photo-title" class="modal-form-input" placeholder="Örn: 2026 Güz Dönemi Sezon Açılışı (boş bırakılırsa dosya adı kullanılır)">
       </div>
 
       <div class="modal-form-group">
@@ -999,14 +999,9 @@ window.openUploadModal = function() {
         <input type="text" id="photo-date" class="modal-form-input" placeholder="Örn: Ekim 2026">
       </div>
 
-      <div class="modal-form-group">
-        <label class="modal-form-label" for="photo-desc">Açıklama</label>
-        <textarea id="photo-desc" class="modal-form-textarea" rows="2" placeholder="Fotoğraf hakkında kısa bilgi..."></textarea>
-      </div>
-
       <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
         <button type="button" class="btn-secondary" onclick="closeGtokModal()" style="padding:0.55rem 1.15rem; font-size:0.88rem;">İptal</button>
-        <button type="submit" class="btn-primary" style="padding:0.55rem 1.35rem; font-size:0.88rem;">Fotoğrafı Kaydet</button>
+        <button type="submit" class="btn-primary" style="padding:0.55rem 1.35rem; font-size:0.88rem;">Fotoğrafları Kaydet</button>
       </div>
     </form>
   `;
@@ -1018,52 +1013,53 @@ window.openUploadModal = function() {
     e.preventDefault();
 
     const fileInput = document.getElementById('photo-file');
-    const title = document.getElementById('photo-title').value.trim();
+    const titleInput = document.getElementById('photo-title').value.trim();
     const category = document.getElementById('photo-category').value;
     const date = document.getElementById('photo-date').value.trim() || new Date().toLocaleDateString('tr-TR');
-    const desc = document.getElementById('photo-desc').value.trim();
 
-    if (!fileInput.files || !fileInput.files[0]) {
-      alert('Lütfen bir görsel seçin.');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Lütfen en az bir görsel seçin.');
       return;
     }
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+    const categoryLabels = { training: 'Antrenman', tournament: 'Turnuva', event: 'Etkinlik' };
+    const files = Array.from(fileInput.files);
+    let saved = 0;
 
-    reader.onload = function(event) {
-      const base64Data = event.target.result;
+    files.forEach((file, idx) => {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const base64Data = event.target.result;
+        const autoTitle = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        const title = titleInput || autoTitle;
 
-      const categoryLabels = {
-        training: 'Antrenman',
-        tournament: 'Turnuva',
-        event: 'Etkinlik'
+        const newRecord = {
+          id: 'user-photo-' + Date.now() + '-' + idx,
+          title,
+          category,
+          categoryLabel: categoryLabels[category] || 'Fotoğraf',
+          date,
+          desc: '',
+          imgSrc: base64Data,
+          isDefault: false
+        };
+
+        try {
+          const existing = JSON.parse(localStorage.getItem('gtok_custom_photos') || '[]');
+          existing.unshift(newRecord);
+          localStorage.setItem('gtok_custom_photos', JSON.stringify(existing));
+        } catch (err) {
+          console.warn('Görsel boyutu nedeniyle localStorage uyarısı:', err);
+        }
+
+        saved++;
+        if (saved === files.length) {
+          closeGtokModal();
+          renderArchiveGrid();
+        }
       };
-
-      const newRecord = {
-        id: 'user-photo-' + Date.now(),
-        title,
-        category,
-        categoryLabel: categoryLabels[category] || 'Fotoğraf',
-        date,
-        desc,
-        imgSrc: base64Data,
-        isDefault: false
-      };
-
-      try {
-        const existing = JSON.parse(localStorage.getItem('gtok_custom_photos') || '[]');
-        existing.unshift(newRecord);
-        localStorage.setItem('gtok_custom_photos', JSON.stringify(existing));
-      } catch (err) {
-        console.warn('Görsel boyutu nedeniyle localStorage uyarısı:', err);
-      }
-
-      closeGtokModal();
-      renderArchiveGrid();
-    };
-
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   });
 };
 
