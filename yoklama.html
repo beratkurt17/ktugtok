@@ -419,6 +419,27 @@
             </div>
           </div>
 
+          <!-- Format 1b: Ders / Seans Bazlı Matris -->
+          <div class="excel-card">
+            <div>
+              <div class="excel-card-header">
+                <div class="excel-icon-box" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10b981;">📚</div>
+                <div>
+                  <h3 style="font-size:1.1rem;color:#fff;">Ders Bazlı Matris (Her Ders Ayrı Sayfa)</h3>
+                  <p style="font-size:0.85rem;color:#94a3b8;margin-top:0.25rem;">
+                    Seçilen ayda her seans / ders grubu için ayrı bir Excel sayfası — katılım matrisi ile birlikte.
+                  </p>
+                </div>
+              </div>
+              <p style="font-size:0.82rem;color:#64748b;margin-top:0.75rem;">Ay seçimi üstteki "Rapor Ayı" alanından yapılır.</p>
+            </div>
+            <div style="margin-top:1rem;">
+              <button class="btn btn-success" onclick="ExcelExporter.exportMatrixBySession()" style="width:100%;">
+                <span>📥 Ders Bazlı Excel İndir (.xlsx)</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Format 2: Detaylı Ham Liste -->
           <div class="excel-card">
             <div>

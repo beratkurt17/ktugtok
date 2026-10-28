@@ -128,10 +128,11 @@ const ExcelExporter = {
       return;
     }
 
-    const attendance = Storage.getAttendance();
+    const attendance = [...Storage.getAttendance()]
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
     const settings = Storage.getSettings();
 
-    const headers = ['Kayıt ID', 'Tarih', 'Giriş Saati', 'Sporcu No', 'Adı Soyadı', 'Kategori', 'Durum'];
+    const headers = ['Kayıt ID', 'Tarih', 'Giriş Saati', 'Sporcu No', 'Adı Soyadı', 'Kategori', 'Seans', 'Durum'];
     const rows = attendance.map(a => [
       a.recordId || '-',
       a.date,
@@ -139,6 +140,7 @@ const ExcelExporter = {
       a.studentId,
       a.studentName,
       a.category,
+      a.sessionName || '-',
       a.status || 'Geldi'
     ]);
 
@@ -150,6 +152,7 @@ const ExcelExporter = {
       { wch: 14 },
       { wch: 24 },
       { wch: 20 },
+      { wch: 26 },
       { wch: 10 }
     ];
 
@@ -160,7 +163,81 @@ const ExcelExporter = {
     this.saveFile(wb, ws, filename, format);
   },
 
-  // 3. Tüm Kayıtlı Üyeleri / Okçuları Dışa Aktar (CSV veya XLSX)
+  // 3. Her Ders / Seans için Ayrı Sheet — Aylık Matris
+  async exportMatrixBySession() {
+    if (!window.XLSX && !(await this.ensureXLSX())) {
+      alert('Excel kütüphanesi yüklenemedi. Lütfen sayfayı yenileyiniz.');
+      return;
+    }
+
+    const monthInput = document.getElementById('excel-month-select')?.value || new Date().toISOString().slice(0, 7);
+    const [yearStr, monthStr] = monthInput.split('-');
+    const year  = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const sessions   = Storage.getSessions();
+    const students   = Storage.getStudents();
+    const attendance = Storage.getAttendance();
+    const settings   = Storage.getSettings();
+
+    const monthNames = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+    const wb = XLSX.utils.book_new();
+    let sheetsAdded = 0;
+
+    for (const session of sessions) {
+      const sesStudents = students.filter(s =>
+        (s.session || '').trim().toLowerCase() === (session.name || '').trim().toLowerCase()
+      ).sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
+
+      if (sesStudents.length === 0) continue;
+
+      // Başlık satırları
+      const titleRow   = [`${settings.clubName || 'OKÇULUK KULÜBÜ'} — ${session.name} — AYLIK YOKLAMA ÇİZELGESİ`];
+      const subTitle   = [`Dönem: ${monthNames[month]} ${year}  |  Rapor: ${new Date().toLocaleDateString('tr-TR')}`];
+      const headers    = ['Sıra', 'Sporcu No', 'Adı Soyadı', 'Kategori'];
+      for (let d = 1; d <= daysInMonth; d++) headers.push(`${d}`);
+      headers.push('Toplam');
+
+      const rows = sesStudents.map((st, idx) => {
+        const row = [idx + 1, st.id, st.name, st.category || 'Genel'];
+        let total = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const came = attendance.some(a => a.studentId === st.id && a.date === dateStr);
+          row.push(came ? 'G' : '-');
+          if (came) total++;
+        }
+        row.push(total);
+        return row;
+      });
+
+      const wsData = [titleRow, subTitle, [], headers, ...rows];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      const colWidths = [{ wch: 6 }, { wch: 14 }, { wch: 26 }, { wch: 22 }];
+      for (let d = 0; d < daysInMonth; d++) colWidths.push({ wch: 4 });
+      colWidths.push({ wch: 8 });
+      ws['!cols'] = colWidths;
+
+      const sheetName = (session.name || `Seans${sheetsAdded + 1}`)
+        .slice(0, 31)
+        .replace(/[:\\\/\?\*\[\]]/g, '_');
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      sheetsAdded++;
+    }
+
+    if (sheetsAdded === 0) {
+      alert('Hiçbir seans için sporcu bulunamadı.\nÖnce sporculara seans (ders grubu) atayın.');
+      return;
+    }
+
+    const filename = `${settings.clubCode || 'GTOK'}_Ders_Bazli_Yoklama_${year}_${String(month).padStart(2,'0')}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  },
+
+  // 4. Tüm Kayıtlı Üyeleri / Okçuları Dışa Aktar (CSV veya XLSX)
   async exportStudents(format = 'csv') {
     if (!window.XLSX && !(await this.ensureXLSX())) {
       alert('Excel kütüphanesi yüklenemedi. Lütfen sayfayı yenileyiniz.');
@@ -203,7 +280,7 @@ const ExcelExporter = {
     this.saveFile(wb, ws, filename, format);
   },
 
-  // 4. Excel (.xlsx / .xls / .csv) Dosyasından Toplu Okçu / Sporcu İçe Aktarma
+  // 5. Excel (.xlsx / .xls / .csv) Dosyasından Toplu Okçu / Sporcu İçe Aktarma
   async importStudentsFromFile(file) {
     if (!file) return;
     if (!window.XLSX && !(await this.ensureXLSX())) {
