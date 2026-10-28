@@ -193,14 +193,13 @@ const Scanner = {
       if (backDeviceId) {
         this.currentCameraId = backDeviceId;
         cameraConfig = { deviceId: { exact: backDeviceId } };
-        if (statusText) statusText.textContent = `Arka kamera seçildi (${backDeviceId.substring(0, 8)}...)`;
+        alert('DEBUG - Arka kamera (exact):\n' + backDeviceId.substring(0, 20));
       } else {
         // deviceId alınamadı — label eşleştirmeye dön
         try {
           const devices = await Html5Qrcode.getCameras();
-          // Debug: hangi kameraları gördüğümüzü logla
-          console.log('[Kamera listesi]', JSON.stringify(devices.map(d => ({ label: d.label, id: d.id?.substring(0, 8) }))));
-          if (statusText) statusText.textContent = `${devices.length} kamera bulundu: ${devices.map(d => d.label || 'isimsiz').join(' | ')}`;
+          const debugInfo = devices.map((d, i) => `${i}: "${d.label || 'isimsiz'}"`).join('\n');
+          alert('DEBUG - Kamera listesi:\n' + debugInfo);
 
           const BACK_KW  = ['back', 'arka', 'rear', 'environment', 'facing back'];
           const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front'];
