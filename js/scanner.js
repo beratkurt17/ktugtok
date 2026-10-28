@@ -1,10 +1,24 @@
 // QR Kod Kamera ve Resim/Dosya Tarayıcı Motoru (KTÜ GTOK)
+// Kamera yönetimi: getUserMedia (html5-qrcode'un kamera API'si bypass edildi)
+// QR tarama: BarcodeDetector (native) veya canvas+html5-qrcode.scanFile fallback
 const Scanner = {
-  html5QrCode: null,
+  videoEl: null,
+  stream: null,
+  scanLoop: null,
+  barcodeDetector: null,
   isScanning: false,
   currentCameraId: null,
+  lastScanned: null,
+  lastScannedTime: 0,
 
   init() {
+    if ('BarcodeDetector' in window) {
+      BarcodeDetector.getSupportedFormats().then(formats => {
+        if (formats.includes('qr_code')) {
+          this.barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+        }
+      }).catch(() => {});
+    }
     this.setupCameraSelect();
     this.setupButtons();
     this.setupFileAndClipboardScan();
@@ -13,47 +27,42 @@ const Scanner = {
   async setupCameraSelect() {
     const select = document.getElementById('camera-select');
     if (!select) return;
-    // Kamera listesi sadece izin verildikten sonra doldurulur (start() sonrasında)
-    // Başlangıçta sadece varsayılan seçenek göster
-    select.innerHTML = '<option value="">Otomatik Seç</option>';
+    select.innerHTML = '<option value="">Arka Kamera</option>';
   },
 
   async refreshCameraList() {
     const select = document.getElementById('camera-select');
-    if (!select || !window.Html5Qrcode) return;
+    if (!select) return;
     try {
-      const devices = await Html5Qrcode.getCameras();
-      if (!devices || !devices.length) return;
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(d => d.kind === 'videoinput');
+      if (!videoInputs.length) return;
 
       const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
       const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
 
-      const frontCams = devices.filter(d => FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-      const backCams  = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-
-      // Extra keyword içermeyen arka kamera = ana kamera; yoksa ilk arka kamera
+      const frontCams = videoInputs.filter(d => FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
+      const backCams  = videoInputs.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
       const mainBack  = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw))) || backCams[0];
       const mainFront = frontCams[0];
 
       select.innerHTML = '';
       if (mainBack) {
         const opt = document.createElement('option');
-        opt.value = mainBack.id;
+        opt.value = mainBack.deviceId;
         opt.textContent = 'Arka Kamera';
         select.appendChild(opt);
       }
       if (mainFront) {
         const opt = document.createElement('option');
-        opt.value = mainFront.id;
+        opt.value = mainFront.deviceId;
         opt.textContent = 'Ön Kamera';
         select.appendChild(opt);
       }
 
-      if (this.currentCameraId && select.querySelector(`option[value="${CSS.escape(this.currentCameraId)}"]`)) {
-        select.value = this.currentCameraId;
-      } else if (mainBack) {
-        select.value = mainBack.id;
-        this.currentCameraId = mainBack.id;
+      if (this.currentCameraId) {
+        const match = select.querySelector(`option[value="${CSS.escape(this.currentCameraId)}"]`);
+        if (match) select.value = this.currentCameraId;
       }
     } catch (err) {
       console.warn('Kamera listesi alınamadı:', err);
@@ -76,7 +85,7 @@ const Scanner = {
 
     if (select) {
       select.addEventListener('change', () => {
-        this.currentCameraId = select.value;
+        this.currentCameraId = select.value || null;
         if (this.isScanning) {
           this.stop().then(() => this.start());
         }
@@ -84,10 +93,9 @@ const Scanner = {
     }
   },
 
-  // 1. Resimden / Galeriden QR Okuma & Ctrl+V Pano Desteği
   setupFileAndClipboardScan() {
     const fileInput = document.getElementById('qr-file-input');
-    const dropZone = document.getElementById('camera-box-dropzone');
+    const dropZone  = document.getElementById('camera-box-dropzone');
 
     if (fileInput) {
       fileInput.addEventListener('change', (e) => {
@@ -96,59 +104,45 @@ const Scanner = {
       });
     }
 
-    // Sürükle - Bırak ile Resim QR Okuma
     if (dropZone) {
-      ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
+      ['dragenter', 'dragover'].forEach(ev => {
+        dropZone.addEventListener(ev, (e) => {
           e.preventDefault();
           dropZone.classList.add('drag-active');
         }, false);
       });
-
-      ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
+      ['dragleave', 'drop'].forEach(ev => {
+        dropZone.addEventListener(ev, (e) => {
           e.preventDefault();
           dropZone.classList.remove('drag-active');
         }, false);
       });
-
       dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        if (files && files.length > 0) {
-          this.scanImageFile(files[0]);
-        }
+        const files = e.dataTransfer?.files;
+        if (files?.length > 0) this.scanImageFile(files[0]);
       });
     }
 
-    // Pano Yapıştırma (Ctrl + V) Desteği (Örn: WhatsApp Web'den kopyalanan QR resmi!)
     document.addEventListener('paste', (e) => {
       const items = (e.clipboardData || e.originalEvent.clipboardData).items;
       for (const item of items) {
         if (item.type.indexOf('image') !== -1) {
-          const blob = item.getAsFile();
           AttendanceManager.showToast('📋 Panodan yapıştırılan QR resmi taranıyor...', 'info');
-          this.scanImageFile(blob);
+          this.scanImageFile(item.getAsFile());
           break;
         }
       }
     });
   },
 
-  // Resim Dosyasından QR Çözümleme
   async scanImageFile(imageFile) {
     if (!imageFile) return;
-
     const statusText = document.getElementById('camera-status-text');
     if (statusText) statusText.textContent = '🖼️ Resimdeki QR kod taranıyor...';
-
-    // Eğer kamera açıksa geçici olarak durdurma gereği duyabilir veya bağımsız scanner nesnesi kullanabiliriz
     try {
-      const fileScanner = new Html5Qrcode("reader-file-temp");
+      const fileScanner = new Html5Qrcode('reader-file-temp');
       const decodedText = await fileScanner.scanFile(imageFile, true);
       await fileScanner.clear();
-
-      // Başarılı Çözümleme!
       if (statusText) statusText.textContent = `✓ Resim Başarıyla Okundu (${decodedText})`;
       AttendanceManager.processCheckIn(decodedText);
     } catch (err) {
@@ -156,89 +150,45 @@ const Scanner = {
       if (statusText) statusText.textContent = '⚠️ Seçilen resimde net bir QR kod bulunamadı.';
       AttendanceManager.showToast('Resimde QR kod bulunamadı veya çözülemedi.', 'error');
     }
-
-    // Inputu temizle ki aynı dosya tekrar seçilebilsin
     const fileInput = document.getElementById('qr-file-input');
     if (fileInput) fileInput.value = '';
   },
 
   async start() {
     const readerElement = document.getElementById('reader');
-    const statusText = document.getElementById('camera-status-text');
-    const toggleBtn = document.getElementById('btn-toggle-camera');
+    const statusText    = document.getElementById('camera-status-text');
+    const toggleBtn     = document.getElementById('btn-toggle-camera');
+    const select        = document.getElementById('camera-select');
 
     if (!readerElement) return;
 
-    if (!window.Html5Qrcode) {
-      if (statusText) statusText.textContent = '⚠️ QR kamera kütüphanesi yüklenemedi. Sayfayı yenileyin.';
-      return;
-    }
-
-    // Her başlatmada temiz bir instance kullan
-    if (this.html5QrCode) {
-      try { await this.html5QrCode.clear(); } catch(_) {}
-      this.html5QrCode = null;
-    }
+    await this.stop();
     readerElement.innerHTML = '';
-    this.html5QrCode = new Html5Qrcode("reader");
 
-    // Kullanıcı dropdown'dan bir kamera seçtiyse onu kullan
-    const select = document.getElementById('camera-select');
-    const selectedId = select && select.value && select.value !== '' ? select.value : null;
+    if (statusText) statusText.textContent = 'Kamera izni isteniyor...';
 
-    // deviceId düz string olarak geçilir — { exact } constraint bazı cihazlarda OverconstrainedError verir
-    let cameraConfig;
-    if (selectedId) {
-      this.currentCameraId = selectedId;
-      cameraConfig = selectedId;
-    } else {
-      try {
-        const devices = await Html5Qrcode.getCameras();
-        const FRONT_KW = ['front', 'ön', 'selfie', 'user', 'facing front', 'forward'];
-        const EXTRA_KW = ['ultra', 'wide', 'geniş', 'tele', 'macro', 'depth', '0.6', '0.5'];
+    // Video elementi
+    this.videoEl = document.createElement('video');
+    this.videoEl.setAttribute('autoplay', '');
+    this.videoEl.setAttribute('playsinline', '');
+    this.videoEl.setAttribute('muted', '');
+    readerElement.appendChild(this.videoEl);
 
-        const backCams = devices.filter(d => !FRONT_KW.some(kw => (d.label || '').toLowerCase().includes(kw)));
-        const picked = backCams.find(d => !EXTRA_KW.some(kw => (d.label || '').toLowerCase().includes(kw)))
-          || backCams[0]
-          || devices[0];
-
-        if (picked) {
-          this.currentCameraId = picked.id;
-          cameraConfig = picked.id;
-        }
-      } catch (_) {}
-
-      if (!cameraConfig) {
-        cameraConfig = { facingMode: 'environment' };
-      }
-    }
-
-    const qrConfig = {
-      fps: 25,
-      qrbox: (viewfinderWidth, viewfinderHeight) => {
-        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-        const edge = Math.max(220, Math.floor(minEdge * 0.72));
-        return { width: edge, height: edge };
-      },
-      aspectRatio: 1.0
-    };
+    // Kamera kısıtı: dropdown seçimi varsa o cihazı, yoksa arka kamera ideal
+    const selectedId = select?.value || null;
+    const videoConstraint = selectedId
+      ? { deviceId: { exact: selectedId } }
+      : { facingMode: { ideal: 'environment' } };
 
     try {
-      if (statusText) statusText.textContent = 'Kamera izni isteniyor...';
+      this.stream = await navigator.mediaDevices.getUserMedia({ video: videoConstraint });
+      this.videoEl.srcObject = this.stream;
+      await this.videoEl.play();
 
-      await this.html5QrCode.start(
-        cameraConfig,
-        qrConfig,
-        (decodedText) => {
-          AttendanceManager.processCheckIn(decodedText);
-        },
-        (_errorMessage) => {
-          // Karede QR yokken normal tarama akışı
-        }
-      );
+      const settings = this.stream.getVideoTracks()[0]?.getSettings?.() || {};
+      if (settings.deviceId) this.currentCameraId = settings.deviceId;
 
       this.isScanning = true;
-      this._facingModeFallback = false;
       if (statusText) statusText.textContent = 'Kamera Aktif • QR Kodu Hedefe Gösterin';
       if (toggleBtn) {
         toggleBtn.innerHTML = '<span>⏹️ Kamerayı Kapat</span>';
@@ -246,55 +196,90 @@ const Scanner = {
       }
       document.getElementById('scanner-overlay')?.style.setProperty('display', 'flex');
 
-      // Kamera başladıktan sonra gerçek kamera listesini güncelle
-      this.refreshCameraList();
-    } catch (err) {
-      console.error('Kamera başlatma hatası:', err);
-      this.isScanning = false;
-      try { await this.html5QrCode.clear(); } catch(_) {}
-      this.html5QrCode = null;
+      await this.refreshCameraList();
+      if (this.currentCameraId && select) {
+        const match = select.querySelector(`option[value="${CSS.escape(this.currentCameraId)}"]`);
+        if (match) select.value = this.currentCameraId;
+      }
 
+      this._startScanLoop();
+
+    } catch (err) {
+      console.error('Kamera hatası:', err);
+      readerElement.innerHTML = '';
+      this.videoEl = null;
+      const msg = String(err).toLowerCase();
+      if (statusText) {
+        if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
+          statusText.textContent = '🚫 Kamera izni reddedildi. Tarayıcı ayarlarından izni verin.';
+        } else {
+          statusText.textContent = `⚠️ Kamera açılamadı: ${err.name} – ${err.message}`;
+        }
+      }
       if (toggleBtn) {
         toggleBtn.innerHTML = '<span>📷 Kamerayı Başlat</span>';
         toggleBtn.className = 'btn btn-primary';
       }
-
-      const msg = String(err).toLowerCase();
-      // Hata detayını her zaman göster (debug için)
-      if (statusText) statusText.textContent = `HATA: ${err.name || ''} – ${err.message || err}`;
-      if (msg.includes('permission') || msg.includes('denied') || msg.includes('notallowed')) {
-        if (statusText) statusText.textContent = '🚫 Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini verin.';
-      } else if (msg.includes('notfound') || msg.includes('nodevice') || msg.includes('overconstrained')) {
-        if (this.currentCameraId && !this._facingModeFallback) {
-          this.currentCameraId = null;
-          this._facingModeFallback = true;
-          if (select) select.value = '';
-          setTimeout(() => this.start(), 500);
-        } else {
-          this._facingModeFallback = false;
-        }
-      }
     }
   },
 
+  _startScanLoop() {
+    if (this.scanLoop) clearInterval(this.scanLoop);
+
+    if (this.barcodeDetector) {
+      this.scanLoop = setInterval(async () => {
+        if (!this.videoEl || this.videoEl.readyState < 2 || this.videoEl.paused) return;
+        try {
+          const barcodes = await this.barcodeDetector.detect(this.videoEl);
+          if (barcodes.length > 0) this._onQrFound(barcodes[0].rawValue);
+        } catch (_) {}
+      }, 100);
+    } else {
+      // BarcodeDetector yoksa canvas üzerinden html5-qrcode.scanFile ile tara
+      const canvas = document.createElement('canvas');
+      const ctx    = canvas.getContext('2d');
+      let scanning = false;
+      const fileScanner = new Html5Qrcode('reader-file-temp');
+
+      this.scanLoop = setInterval(async () => {
+        if (scanning || !this.videoEl || this.videoEl.readyState < 2 || this.videoEl.paused) return;
+        scanning = true;
+        canvas.width  = this.videoEl.videoWidth  || 640;
+        canvas.height = this.videoEl.videoHeight || 480;
+        ctx.drawImage(this.videoEl, 0, 0);
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            try {
+              const result = await fileScanner.scanFile(new File([blob], 'f.jpg', { type: 'image/jpeg' }), false);
+              this._onQrFound(result);
+            } catch (_) {}
+          }
+          scanning = false;
+        }, 'image/jpeg', 0.7);
+      }, 250);
+    }
+  },
+
+  _onQrFound(text) {
+    const now = Date.now();
+    if (text === this.lastScanned && now - this.lastScannedTime < 3000) return;
+    this.lastScanned     = text;
+    this.lastScannedTime = now;
+    AttendanceManager.processCheckIn(text);
+  },
 
   async stop() {
     const statusText = document.getElementById('camera-status-text');
-    const toggleBtn = document.getElementById('btn-toggle-camera');
+    const toggleBtn  = document.getElementById('btn-toggle-camera');
 
-    if (this.html5QrCode) {
-      try {
-        if (this.isScanning) {
-          await this.html5QrCode.stop();
-        }
-        await this.html5QrCode.clear();
-      } catch (e) {
-        console.warn('Kamera durdurma:', e);
-      }
-      this.html5QrCode = null;
-    }
+    if (this.scanLoop) { clearInterval(this.scanLoop); this.scanLoop = null; }
+    if (this.stream)   { this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+    if (this.videoEl)  { this.videoEl.srcObject = null; this.videoEl.remove(); this.videoEl = null; }
+
+    const readerEl = document.getElementById('reader');
+    if (readerEl) readerEl.innerHTML = '';
+
     this.isScanning = false;
-
     if (statusText) statusText.textContent = 'Kamera Kapalı';
     if (toggleBtn) {
       toggleBtn.innerHTML = '<span>📷 Kamerayı Başlat</span>';
