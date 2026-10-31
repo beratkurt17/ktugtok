@@ -41,7 +41,43 @@ const ExcelExporter = {
     const students   = Storage.getStudents();
     const attendance = Storage.getAttendance();
     const settings   = Storage.getSettings();
-    const today      = new Date().toISOString().slice(0, 10);
+    const todayDate  = new Date(); todayDate.setHours(0,0,0,0);
+    const todayStr   = todayDate.toISOString().slice(0, 10);
+
+    // Seans gününden (SALI, ÇARŞAMBA...) JS gün numarasına çevirici
+    const DAY_MAP = { PAZARTESI:1, PAZARTESİ:1, SALI:2, ÇARŞAMBA:3, CARSAMBA:3,
+                      PERŞEMBE:4, PERSEMBE:4, CUMA:5, CUMARTESİ:6, CUMARTESI:6, PAZAR:0 };
+
+    // Seansın başlangıcından bugüne tüm haftalık tarihleri üret
+    function getWeekDates(session, sesStudents) {
+      const raw = (session.day || '').toUpperCase()
+        .replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G').replace(/Ö/g,'O').replace(/Ü/g,'U');
+      const dayNum = DAY_MAP[raw] ?? null;
+
+      const studentIds = new Set(sesStudents.map(s => s.id));
+      const sesRecs = attendance.filter(a => studentIds.has(a.studentId));
+
+      if (sesRecs.length === 0) return [];
+
+      // En erken kayıt tarihini bul
+      const earliest = sesRecs.map(a => a.date).sort()[0];
+
+      if (dayNum === null) {
+        // Gün bilgisi yoksa sadece kayıtlı tarihler
+        return [...new Set(sesRecs.map(a => a.date))].sort();
+      }
+
+      // earliest'ten itibaren seansın gününe (dayNum) atla, sonra haftalık ilerle
+      const cursor = new Date(earliest);
+      while (cursor.getDay() !== dayNum) cursor.setDate(cursor.getDate() + 1);
+
+      const dates = [];
+      while (cursor <= todayDate) {
+        dates.push(cursor.toISOString().slice(0, 10));
+        cursor.setDate(cursor.getDate() + 7);
+      }
+      return dates;
+    }
 
     const wb = XLSX.utils.book_new();
     let sheetsAdded = 0;
@@ -53,50 +89,43 @@ const ExcelExporter = {
 
       if (sesStudents.length === 0) continue;
 
-      // Bu seansın tüm yoklama tarihlerini kronolojik sıraya diz
-      const studentIds = new Set(sesStudents.map(s => s.id));
-      const sessionDates = [...new Set(
-        attendance.filter(a => studentIds.has(a.studentId)).map(a => a.date)
-      )].sort();
+      const weekDates = getWeekDates(session, sesStudents);
+      if (weekDates.length === 0) continue;
 
-      const weekCount = sessionDates.length;
+      const weekCount = weekDates.length;
       const sesDay    = session.day  || '';
       const sesTime   = session.time || '';
 
       const titleRow = [`${settings.clubName || 'GTOK'} — SPORCU DEVAM RAPORU — ${session.name}${sesDay ? ` (${sesDay}${sesTime ? ' ' + sesTime : ''})` : ''}`];
       const infoRow  = [`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')} | Toplam ${weekCount} Hafta`];
 
-      // Başlıklar: tarih bilgisi hafta sütununa ekli
       const headers = ['No', 'İsim Soyisim', 'Seans',
-        ...sessionDates.map((d, i) => `${i + 1}. Hafta (${d.slice(5).replace('-', '/')})`),
-        'Katılım (Gün)', 'Katılım Oranı'
+        ...weekDates.map((d, i) => `${i + 1}. Hafta\n${d.slice(5).replace('-','/')}`),
+        'Katılım\n(Gün)', 'Katılım\nOranı'
       ];
 
       const weeklyCount = new Array(weekCount).fill(0);
       const studentRows = sesStudents.map((st, idx) => {
         const attended = new Set(attendance.filter(a => a.studentId === st.id).map(a => a.date));
-        const marks = sessionDates.map((d, wi) => {
+        const marks = weekDates.map((d, wi) => {
           if (attended.has(d)) { weeklyCount[wi]++; return 'G'; }
           return '';
         });
         const totalDays = marks.filter(m => m === 'G').length;
-        const rate = weekCount > 0 ? `%${Math.round(totalDays / weekCount * 100)}` : '%0';
+        const rate = `%${Math.round(totalDays / weekCount * 100)}`;
         return [idx + 1, st.name, sesTime || session.name, ...marks, totalDays, rate];
       });
 
-      // Alt toplam satırı
       const footerRow = ['', 'Haftalık Katılan Sporcu Sayısı', '',
-        ...weeklyCount,
-        weeklyCount.reduce((a, b) => a + b, 0),
-        ''
+        ...weeklyCount, weeklyCount.reduce((a, b) => a + b, 0), ''
       ];
 
       const wsData = [titleRow, infoRow, [], headers, ...studentRows, [], footerRow];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
       const colWidths = [{ wch: 5 }, { wch: 26 }, { wch: 18 }];
-      sessionDates.forEach(() => colWidths.push({ wch: 14 }));
-      colWidths.push({ wch: 12 }, { wch: 13 });
+      weekDates.forEach(() => colWidths.push({ wch: 10 }));
+      colWidths.push({ wch: 10 }, { wch: 10 });
       ws['!cols'] = colWidths;
 
       const sheetName = (session.name || `Seans${sheetsAdded + 1}`)
@@ -106,11 +135,11 @@ const ExcelExporter = {
     }
 
     if (sheetsAdded === 0) {
-      alert('Hiçbir seans için sporcu bulunamadı.\nÖnce sporculara seans atayın.');
+      alert('Henüz yoklama kaydı bulunamadı.');
       return;
     }
 
-    XLSX.writeFile(wb, `${settings.clubCode || 'GTOK'}_Sporcu_Devam_Raporu_${today}.xlsx`);
+    XLSX.writeFile(wb, `${settings.clubCode || 'GTOK'}_Sporcu_Devam_Raporu_${todayStr}.xlsx`);
   },
 
   // 2. Resmi Kulüp Matris Çizelgesi (Satırlarda Sporcular, Sütunlarda Günler)
