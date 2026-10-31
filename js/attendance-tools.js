@@ -60,18 +60,23 @@ const AttendanceTools = {
       listHtml = '<p style="color:#64748b;font-size:0.88rem;padding:0.5rem 0;">Henüz yoklama kaydı bulunmuyor.</p>';
     } else {
       listHtml = records.map(r => {
-        const d     = new Date(r.date);
-        const day   = d.getDate();
-        const month = MONTH_NAMES[d.getMonth() + 1];
-        const year  = d.getFullYear();
-        const dName = TURK_DAYS[d.getDay()];
+        const d       = new Date(r.date);
+        const day     = d.getDate();
+        const month   = MONTH_NAMES[d.getMonth() + 1];
+        const year    = d.getFullYear();
+        const dName   = TURK_DAYS[d.getDay()];
         const timeStr = r.time && r.time !== '—' ? r.time : '';
+        const izinli  = r.status === 'İzinli';
+        const badge   = izinli ? 'İ' : 'G';
+        const clr     = izinli ? '#f59e0b' : '#10b981';
+        const bg      = izinli ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)';
+        const border  = izinli ? 'rgba(245,158,11,0.3)'  : 'rgba(16,185,129,0.3)';
         return `
           <div style="display:flex;align-items:center;gap:0.7rem;padding:0.38rem 0.5rem;
             border-bottom:1px solid rgba(255,255,255,0.04);">
-            <span style="color:#10b981;font-weight:700;font-size:0.85rem;
-              background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);
-              padding:0.08rem 0.55rem;border-radius:4px;flex-shrink:0;">G</span>
+            <span style="color:${clr};font-weight:700;font-size:0.85rem;
+              background:${bg};border:1px solid ${border};
+              padding:0.08rem 0.55rem;border-radius:4px;flex-shrink:0;">${badge}</span>
             <span style="color:#e2e8f0;font-size:0.9rem;">${day} ${month} ${year}</span>
             <span style="color:#64748b;font-size:0.82rem;">${dName}</span>
             ${timeStr ? `<span style="color:#64748b;font-size:0.75rem;margin-left:auto;">${timeStr}</span>` : ''}

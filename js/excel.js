@@ -104,12 +104,18 @@ const ExcelExporter = {
         'Katılım\n(Gün)', 'Katılım\nOranı'
       ];
 
+      // date → kayıt haritası (status için)
+      const recMap = {};
+      attendance.filter(a => studentIds.has(a.studentId)).forEach(a => { recMap[a.studentId + '|' + a.date] = a; });
+
       const weeklyCount = new Array(weekCount).fill(0);
       const studentRows = sesStudents.map((st, idx) => {
-        const attended = new Set(attendance.filter(a => a.studentId === st.id).map(a => a.date));
         const marks = weekDates.map((d, wi) => {
-          if (attended.has(d)) { weeklyCount[wi]++; return 'G'; }
-          return '';
+          const rec = recMap[st.id + '|' + d];
+          if (!rec) return '';
+          if (rec.status === 'İzinli') return 'İ';
+          weeklyCount[wi]++;
+          return 'G';
         });
         const totalDays = marks.filter(m => m === 'G').length;
         const rate = `%${Math.round(totalDays / weekCount * 100)}`;
