@@ -105,6 +105,7 @@ const ExcelExporter = {
       ];
 
       // date → kayıt haritası (status için)
+      const studentIds = new Set(sesStudents.map(s => s.id));
       const recMap = {};
       attendance.filter(a => studentIds.has(a.studentId)).forEach(a => { recMap[a.studentId + '|' + a.date] = a; });
 

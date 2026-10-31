@@ -256,7 +256,7 @@ const SessionManager = {
         isMakeup:    false,
         timestamp:   Date.now()
       });
-      if (newStatus === 'Geldi' && window.soundFX) window.soundFX.playCheckin();
+      if (newStatus === 'Geldi' && window.soundFX) window.soundFX.playSuccess();
     }
 
     this.renderDetailStudentsList(sessionId);
