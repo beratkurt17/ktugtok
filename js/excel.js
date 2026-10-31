@@ -30,83 +30,87 @@ const ExcelExporter = {
     }
   },
 
-  // 1. Sporcu Devam Raporu — Her sporcu için toplam/beklenen/yüzde
+  // 1. Sporcu Devam Raporu — Her seans için ayrı sayfa, hafta hafta G listesi
   async exportAttendanceReport(format = 'xlsx') {
     if (!window.XLSX && !(await this.ensureXLSX())) {
       alert('Excel kütüphanesi yüklenemedi. Lütfen sayfayı yenileyiniz.');
       return;
     }
 
+    const sessions   = Storage.getSessions();
     const students   = Storage.getStudents();
     const attendance = Storage.getAttendance();
-    const sessions   = Storage.getSessions();
     const settings   = Storage.getSettings();
-
-    const DAY_MAP   = { PAZARTESI:1, SALI:2, ÇARŞAMBA:3, PERŞEMBE:4, CUMA:5, CUMARTESİ:6, PAZAR:0 };
-    const today     = new Date(); today.setHours(0,0,0,0);
-    const earliest  = new Date(today.getFullYear(), today.getMonth() - 11, 1);
-
-    // Her öğrenci için beklenen seans sayısını hesapla
-    function expectedCount(student) {
-      const ses = sessions.find(s =>
-        (s.name||'').trim().toLowerCase() === (student.session||'').trim().toLowerCase()
-      );
-      const dayNum = ses?.day
-        ? (DAY_MAP[ses.day.toUpperCase().replace(/İ/g,'I').replace(/Ş/g,'S').replace(/Ğ/g,'G')] ?? null)
-        : null;
-      if (dayNum === null) return null;
-
-      // Öğrencinin ilk kaydından veya en fazla 12 ay geriden başla
-      const recs = attendance.filter(a => a.studentId === student.id).sort((a,b)=>a.date.localeCompare(b.date));
-      let start = new Date(earliest);
-      if (recs.length > 0) {
-        const fr = new Date(recs[0].date);
-        if (fr < start) start = fr < earliest ? earliest : fr;
-      }
-
-      let cnt = 0;
-      const d = new Date(start);
-      while (d.getDay() !== dayNum) d.setDate(d.getDate()+1);
-      while (d <= today) { cnt++; d.setDate(d.getDate()+7); }
-      return cnt;
-    }
-
-    const titleRow = [`${settings.clubName || 'OKÇULUK KULÜBÜ'} — SPORCU DEVAM RAPORU`];
-    const subTitle = [`Rapor Tarihi: ${today.toLocaleDateString('tr-TR')} | Son 12 Ay`];
-    const headers  = ['Sıra', 'Sporcu No', 'Adı Soyadı', 'Seans / Ders Grubu', 'Kategori',
-                      'Geldiği Gün', 'Beklenen Seans', 'Devam %', 'Devamsızlık'];
-
-    const rows = students
-      .sort((a,b) => (a.session||'').localeCompare(b.session||'','tr') || a.name.localeCompare(b.name,'tr'))
-      .map((st, idx) => {
-        const attended = attendance.filter(a => a.studentId === st.id).length;
-        const expected = expectedCount(st);
-        const pct      = (expected && expected > 0) ? Math.round(attended / expected * 100) : '';
-        const absent   = (expected && expected > 0) ? expected - attended : '';
-        return [
-          idx + 1,
-          st.id,
-          st.name,
-          st.session || '—',
-          st.category || 'Genel',
-          attended,
-          expected ?? '—',
-          pct !== '' ? `%${pct}` : '—',
-          absent !== '' ? absent : '—'
-        ];
-      });
-
-    const wsData = [titleRow, subTitle, [], headers, ...rows];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols'] = [
-      { wch: 6 }, { wch: 14 }, { wch: 26 }, { wch: 28 }, { wch: 20 },
-      { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 12 }
-    ];
+    const today      = new Date().toISOString().slice(0, 10);
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Devam_Raporu');
-    const filename = `${settings.clubCode || 'GTOK'}_Devam_Raporu_${today.toISOString().slice(0,10)}`;
-    this.saveFile(wb, ws, filename, format);
+    let sheetsAdded = 0;
+
+    for (const session of sessions) {
+      const sesStudents = students
+        .filter(s => (s.session || '').trim().toLowerCase() === (session.name || '').trim().toLowerCase())
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
+
+      if (sesStudents.length === 0) continue;
+
+      // Bu seansın tüm yoklama tarihlerini kronolojik sıraya diz
+      const studentIds = new Set(sesStudents.map(s => s.id));
+      const sessionDates = [...new Set(
+        attendance.filter(a => studentIds.has(a.studentId)).map(a => a.date)
+      )].sort();
+
+      const weekCount = sessionDates.length;
+      const sesDay    = session.day  || '';
+      const sesTime   = session.time || '';
+
+      const titleRow = [`${settings.clubName || 'GTOK'} — SPORCU DEVAM RAPORU — ${session.name}${sesDay ? ` (${sesDay}${sesTime ? ' ' + sesTime : ''})` : ''}`];
+      const infoRow  = [`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')} | Toplam ${weekCount} Hafta`];
+
+      // Başlıklar: tarih bilgisi hafta sütununa ekli
+      const headers = ['No', 'İsim Soyisim', 'Seans',
+        ...sessionDates.map((d, i) => `${i + 1}. Hafta (${d.slice(5).replace('-', '/')})`),
+        'Katılım (Gün)', 'Katılım Oranı'
+      ];
+
+      const weeklyCount = new Array(weekCount).fill(0);
+      const studentRows = sesStudents.map((st, idx) => {
+        const attended = new Set(attendance.filter(a => a.studentId === st.id).map(a => a.date));
+        const marks = sessionDates.map((d, wi) => {
+          if (attended.has(d)) { weeklyCount[wi]++; return 'G'; }
+          return '';
+        });
+        const totalDays = marks.filter(m => m === 'G').length;
+        const rate = weekCount > 0 ? `%${Math.round(totalDays / weekCount * 100)}` : '%0';
+        return [idx + 1, st.name, sesTime || session.name, ...marks, totalDays, rate];
+      });
+
+      // Alt toplam satırı
+      const footerRow = ['', 'Haftalık Katılan Sporcu Sayısı', '',
+        ...weeklyCount,
+        weeklyCount.reduce((a, b) => a + b, 0),
+        ''
+      ];
+
+      const wsData = [titleRow, infoRow, [], headers, ...studentRows, [], footerRow];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      const colWidths = [{ wch: 5 }, { wch: 26 }, { wch: 18 }];
+      sessionDates.forEach(() => colWidths.push({ wch: 14 }));
+      colWidths.push({ wch: 12 }, { wch: 13 });
+      ws['!cols'] = colWidths;
+
+      const sheetName = (session.name || `Seans${sheetsAdded + 1}`)
+        .slice(0, 31).replace(/[:\\\/\?\*\[\]]/g, '_');
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      sheetsAdded++;
+    }
+
+    if (sheetsAdded === 0) {
+      alert('Hiçbir seans için sporcu bulunamadı.\nÖnce sporculara seans atayın.');
+      return;
+    }
+
+    XLSX.writeFile(wb, `${settings.clubCode || 'GTOK'}_Sporcu_Devam_Raporu_${today}.xlsx`);
   },
 
   // 2. Resmi Kulüp Matris Çizelgesi (Satırlarda Sporcular, Sütunlarda Günler)
