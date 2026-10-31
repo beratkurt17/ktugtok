@@ -176,42 +176,47 @@ const SessionManager = {
 
     tbody.innerHTML = assigned.map(st => {
       const record = todayRecords.find(r => r.studentId === st.id);
-      const isPresent = !!record;
-      if (isPresent) attendedCount++;
+      const status = record ? (record.status || 'Geldi') : null;
+      if (status === 'Geldi') attendedCount++;
+
+      // Durum rozeti
+      const statusBadge = status === 'Geldi'
+        ? `<span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.4);font-size:0.78rem;font-weight:700;">G Geldi ${record.time ? '('+record.time+')' : ''}</span>`
+        : status === 'İzinli'
+        ? `<span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);font-size:0.78rem;font-weight:700;">İ İzinli</span>`
+        : `<span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(239,68,68,0.08);color:#f87171;border:1px solid rgba(239,68,68,0.25);font-size:0.78rem;">⏳ Bekleniyor</span>`;
+
+      // Aksiyon butonları
+      const rid = record ? record.recordId : '';
+      let actionBtns = '';
+      if (!record) {
+        actionBtns = `
+          <button class="btn btn-primary" style="padding:0.3rem 0.6rem;font-size:0.78rem;" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}','Geldi')">✓ Geldi</button>
+          <button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.78rem;color:#fbbf24;border-color:rgba(245,158,11,0.35);" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}','İzinli')">İ İzinli</button>
+        `;
+      } else if (status === 'Geldi') {
+        actionBtns = `
+          <button class="btn btn-secondary" style="padding:0.3rem 0.6rem;font-size:0.78rem;color:#fbbf24;border-color:rgba(245,158,11,0.35);" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}','İzinli','${rid}')">İ İzinli</button>
+          <button class="btn btn-secondary btn-icon-only" style="padding:0.3rem 0.5rem;color:#f87171;" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}',null,'${rid}')">✕</button>
+        `;
+      } else if (status === 'İzinli') {
+        actionBtns = `
+          <button class="btn btn-primary" style="padding:0.3rem 0.6rem;font-size:0.78rem;" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}','Geldi','${rid}')">✓ Geldi</button>
+          <button class="btn btn-secondary btn-icon-only" style="padding:0.3rem 0.5rem;color:#f87171;" onclick="SessionManager.setStudentStatus('${st.id}','${sessionId}',null,'${rid}')">✕</button>
+        `;
+      }
 
       return `
-        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-          <td style="padding: 0.65rem 0.75rem; font-weight: 700; color: var(--gold);">${this.escapeHtml(st.id)}</td>
-          <td style="padding: 0.65rem 0.75rem; font-weight: 600; color: #fff;">${this.escapeHtml(st.name)}</td>
-          <td style="padding: 0.65rem 0.75rem; color: #94a3b8; font-size: 0.82rem;">${this.escapeHtml(st.faculty || '')} ${st.department ? '• ' + this.escapeHtml(st.department) : ''}</td>
-          <td style="padding: 0.65rem 0.75rem;">
-            ${isPresent ? `
-              <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); font-size: 0.78rem; font-weight: 700;">
-                ✅ Geldi (${record.time || ''})
-              </span>
-            ` : `
-              <span style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(239, 68, 68, 0.08); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); font-size: 0.78rem;">
-                ⏳ Bekleniyor
-              </span>
-            `}
-          </td>
-          <td style="padding: 0.65rem 0.75rem; text-align: right;">
-            <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
-              ${isPresent ? `
-                <button class="btn btn-secondary btn-icon-only" style="padding: 0.3rem 0.5rem; font-size: 0.78rem; color: #f87171;" title="Yoklamayı Geri Al / İptal Et" onclick="SessionManager.toggleAttendance('${st.id}', '${sessionId}')">
-                  ✕ Yoklamayı Kaldır
-                </button>
-              ` : `
-                <button class="btn btn-primary" style="padding: 0.3rem 0.65rem; font-size: 0.78rem;" onclick="SessionManager.toggleAttendance('${st.id}', '${sessionId}')">
-                  ✓ Geldi Yaz
-                </button>
-              `}
-              <button class="btn btn-secondary btn-icon-only" style="padding: 0.3rem 0.5rem;" title="Başka Saate / Seansa Taşı" onclick="SessionManager.promptChangeStudentSession('${st.id}')">
-                🔄
-              </button>
-              <button class="btn btn-danger btn-icon-only" style="padding: 0.3rem 0.5rem;" title="Bu Seans Grubundan Çıkar" onclick="SessionManager.removeStudentFromSession('${st.id}')">
-                🗑️
-              </button>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:0.65rem 0.75rem;font-weight:700;color:var(--gold);">${this.escapeHtml(st.id)}</td>
+          <td style="padding:0.65rem 0.75rem;font-weight:600;color:#fff;">${this.escapeHtml(st.name)}</td>
+          <td style="padding:0.65rem 0.75rem;color:#94a3b8;font-size:0.82rem;">${this.escapeHtml(st.faculty || '')}${st.department ? ' • '+this.escapeHtml(st.department) : ''}</td>
+          <td style="padding:0.65rem 0.75rem;">${statusBadge}</td>
+          <td style="padding:0.65rem 0.75rem;text-align:right;">
+            <div style="display:inline-flex;gap:0.35rem;align-items:center;">
+              ${actionBtns}
+              <button class="btn btn-secondary btn-icon-only" style="padding:0.3rem 0.5rem;" title="Seansı Değiştir" onclick="SessionManager.promptChangeStudentSession('${st.id}')">🔄</button>
+              <button class="btn btn-danger btn-icon-only" style="padding:0.3rem 0.5rem;" title="Seans Grubundan Çıkar" onclick="SessionManager.removeStudentFromSession('${st.id}')">🗑️</button>
             </div>
           </td>
         </tr>
@@ -223,46 +228,48 @@ const SessionManager = {
     }
   },
 
-  // Tek tıkla Geldi / Gelmedi yoklama kaydı
-  toggleAttendance(studentId, sessionId) {
+  // Geldi / İzinli / Kaldır
+  setStudentStatus(studentId, sessionId, newStatus, existingRecordId) {
     const student = Storage.getStudentById(studentId);
     if (!student) return;
 
-    const session = Storage.getSessionById(sessionId);
-    const today = new Date().toISOString().slice(0, 10);
-    const attendance = Storage.getAttendance();
-    const existingIndex = attendance.findIndex(a => a.studentId === studentId && a.date === today);
+    if (existingRecordId) {
+      Storage.removeAttendanceRecord(existingRecordId);
+    }
 
-    if (existingIndex !== -1) {
-      // Yoklamayı geri al
-      attendance.splice(existingIndex, 1);
-      Storage.saveAttendance(attendance);
-    } else {
-      // Geldi yaz
-      const now = new Date();
-      const time = now.toTimeString().slice(0, 5);
-      const newRec = {
-        recordId: 'ATT-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-        studentId: student.id,
+    if (newStatus) {
+      const session = Storage.getSessionById(sessionId);
+      const today   = new Date().toISOString().slice(0, 10);
+      const time    = newStatus === 'Geldi'
+        ? new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+        : '—';
+      Storage.addAttendanceRecord({
+        recordId:    'ATT-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        studentId:   student.id,
         studentName: student.name,
-        category: student.category || 'Genel',
-        date: today,
-        time: time,
-        status: 'Geldi',
-        sessionId: session ? session.id : '',
+        category:    student.category || 'Genel',
+        date:        today,
+        time,
+        status:      newStatus,
+        sessionId:   session ? session.id   : '',
         sessionName: session ? session.name : '',
-        timestamp: Date.now()
-      };
-      Storage.addAttendance(newRec);
-      if (window.soundFX) window.soundFX.playCheckin();
+        isMakeup:    false,
+        timestamp:   Date.now()
+      });
+      if (newStatus === 'Geldi' && window.soundFX) window.soundFX.playCheckin();
     }
 
     this.renderDetailStudentsList(sessionId);
     this.renderSessionsGrid();
     this.updateStats();
-    if (window.AttendanceManager) {
-      AttendanceManager.renderTodayList();
-    }
+    if (window.AttendanceManager) AttendanceManager.renderTodayList();
+  },
+
+  // Geriye dönük uyumluluk
+  toggleAttendance(studentId, sessionId) {
+    const today = new Date().toISOString().slice(0, 10);
+    const rec   = Storage.getAttendance().find(a => a.studentId === studentId && a.date === today);
+    this.setStudentStatus(studentId, sessionId, rec ? null : 'Geldi', rec ? rec.recordId : undefined);
   },
 
   // Seans detayından QR Yoklamaya geçiş
