@@ -39,12 +39,19 @@ const ExcelExporter = {
 
     const TOTAL_WEEKS = 40; // Sabit 40 hafta
 
+    function toLocalDateStr(d) {
+      const y  = d.getFullYear();
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const dy = String(d.getDate()).padStart(2, '0');
+      return `${y}-${mo}-${dy}`;
+    }
+
     const sessions   = Storage.getSessions();
     const students   = Storage.getStudents();
     const attendance = Storage.getAttendance();
     const settings   = Storage.getSettings();
     const todayDate  = new Date(); todayDate.setHours(0,0,0,0);
-    const todayStr   = todayDate.toISOString().slice(0, 10);
+    const todayStr   = toLocalDateStr(todayDate);
 
     // Seans gününden (SALI, ÇARŞAMBA...) JS gün numarasına çevirici
     const DAY_MAP = { PAZARTESI:1, 'PAZARTESİ':1, SALI:2, 'ÇARŞAMBA':3, CARSAMBA:3,
@@ -99,7 +106,7 @@ const ExcelExporter = {
       const dates = [];
       const cursor = new Date(startDate);
       for (let w = 0; w < TOTAL_WEEKS; w++) {
-        dates.push(cursor.toISOString().slice(0, 10));
+        dates.push(toLocalDateStr(cursor));
         cursor.setDate(cursor.getDate() + 7);
       }
       return dates;
