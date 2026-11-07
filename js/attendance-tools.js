@@ -138,28 +138,24 @@ const AttendanceTools = {
       return;
     }
 
-    const attendance  = Storage.getAttendance();
-    const existingIds = new Set(attendance.filter(a => a.date === dateVal).map(a => a.studentId));
+    const existingMap = {};
+    Storage.getAttendance()
+      .filter(a => a.date === dateVal)
+      .forEach(r => { existingMap[r.studentId] = r; });
 
     let html = `
       <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-secondary" style="font-size:0.82rem;padding:0.3rem 0.8rem;" onclick="AttendanceTools.bulkCheckAll(true)">Tümünü Seç</button>
-        <button class="btn btn-secondary" style="font-size:0.82rem;padding:0.3rem 0.8rem;" onclick="AttendanceTools.bulkCheckAll(false)">Temizle</button>
+        <button class="btn btn-secondary" style="font-size:0.82rem;padding:0.3rem 0.8rem;" onclick="AttendanceTools.bulkSetAll('Geldi')">Tümü Geldi</button>
+        <button class="btn btn-secondary" style="font-size:0.82rem;padding:0.3rem 0.8rem;" onclick="AttendanceTools.bulkSetAll('İzinli')">Tümü İzinli</button>
+        <button class="btn btn-secondary" style="font-size:0.82rem;padding:0.3rem 0.8rem;" onclick="AttendanceTools.bulkSetAll('')">Temizle</button>
         <span style="color:#94a3b8;font-size:0.82rem;">${students.length} sporcu · ${this.escapeHtml(session.name)}</span>
       </div>
       <div id="bulk-student-list" style="display:flex;flex-direction:column;gap:0.3rem;">`;
 
     students.forEach(s => {
-      const checked = existingIds.has(s.id);
-      html += `
-        <label style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:6px;cursor:pointer;
-          background:${checked ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.01)'};
-          border:1px solid ${checked ? 'rgba(16,185,129,0.25)' : 'var(--border-color)'};">
-          <input type="checkbox" value="${this.escapeHtml(s.id)}" ${checked ? 'checked' : ''}
-            style="width:16px;height:16px;accent-color:#10b981;flex-shrink:0;">
-          <span style="font-weight:600;color:#fff;flex:1;">${this.escapeHtml(s.name)}</span>
-          <span style="font-size:0.78rem;color:#64748b;">${s.id}</span>
-        </label>`;
+      const rec = existingMap[s.id];
+      const currentStatus = rec ? (rec.status || 'Geldi') : '';
+      html += this._bulkStudentRow(s, currentStatus);
     });
 
     html += `</div>`;
@@ -167,10 +163,60 @@ const AttendanceTools = {
     if (saveBtn) saveBtn.style.display = 'block';
   },
 
-  bulkCheckAll(checked) {
+  _bulkStudentRow(s, status) {
+    const btnBase    = 'padding:0.18rem 0.6rem;border-radius:4px;border:1px solid;font-size:0.82rem;font-weight:600;cursor:pointer;';
+    const inact      = 'background:transparent;color:#64748b;border-color:rgba(255,255,255,0.1);';
+    const geldiAct   = 'background:rgba(16,185,129,0.2);color:#10b981;border-color:rgba(16,185,129,0.5);';
+    const izinliAct  = 'background:rgba(245,158,11,0.2);color:#f59e0b;border-color:rgba(245,158,11,0.5);';
+    const gelmediAct = 'background:rgba(100,116,139,0.2);color:#94a3b8;border-color:rgba(100,116,139,0.4);';
+
+    const rowBg     = status === 'Geldi' ? 'rgba(16,185,129,0.06)' : status === 'İzinli' ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.01)';
+    const rowBorder = status === 'Geldi' ? 'rgba(16,185,129,0.25)' : status === 'İzinli' ? 'rgba(245,158,11,0.25)' : 'var(--border-color)';
+
+    return `
+      <div class="bulk-student-row" data-id="${this.escapeHtml(s.id)}" data-status="${status}"
+        style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;border-radius:6px;
+        background:${rowBg};border:1px solid ${rowBorder};">
+        <span style="font-weight:600;color:#fff;flex:1;">${this.escapeHtml(s.name)}</span>
+        <span style="font-size:0.78rem;color:#64748b;">${this.escapeHtml(s.id)}</span>
+        <div style="display:flex;gap:0.3rem;flex-shrink:0;">
+          <button class="bulk-status-btn" onclick="AttendanceTools.bulkSetStatus(this,'Geldi')"
+            style="${btnBase}${status === 'Geldi' ? geldiAct : inact}">G</button>
+          <button class="bulk-status-btn" onclick="AttendanceTools.bulkSetStatus(this,'İzinli')"
+            style="${btnBase}${status === 'İzinli' ? izinliAct : inact}">İ</button>
+          <button class="bulk-status-btn" onclick="AttendanceTools.bulkSetStatus(this,'')"
+            style="${btnBase}${!status ? gelmediAct : inact}">—</button>
+        </div>
+      </div>`;
+  },
+
+  _applyStatus(row, status) {
+    row.dataset.status = status;
+    row.style.background = status === 'Geldi' ? 'rgba(16,185,129,0.06)' : status === 'İzinli' ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.01)';
+    row.style.borderColor = status === 'Geldi' ? 'rgba(16,185,129,0.25)' : status === 'İzinli' ? 'rgba(245,158,11,0.25)' : 'var(--border-color)';
+
+    const btnBase    = 'padding:0.18rem 0.6rem;border-radius:4px;border:1px solid;font-size:0.82rem;font-weight:600;cursor:pointer;';
+    const inact      = 'background:transparent;color:#64748b;border-color:rgba(255,255,255,0.1);';
+    const activeStyles = [
+      'background:rgba(16,185,129,0.2);color:#10b981;border-color:rgba(16,185,129,0.5);',
+      'background:rgba(245,158,11,0.2);color:#f59e0b;border-color:rgba(245,158,11,0.5);',
+      'background:rgba(100,116,139,0.2);color:#94a3b8;border-color:rgba(100,116,139,0.4);',
+    ];
+    const statuses = ['Geldi', 'İzinli', ''];
+    row.querySelectorAll('.bulk-status-btn').forEach((b, i) => {
+      b.style.cssText = btnBase + (statuses[i] === status ? activeStyles[i] : inact);
+    });
+  },
+
+  bulkSetStatus(btn, status) {
+    const row = btn.closest('.bulk-student-row');
+    if (row) this._applyStatus(row, status);
+  },
+
+  bulkSetAll(status) {
     document.getElementById('bulk-student-list')
-      ?.querySelectorAll('input[type=checkbox]')
-      .forEach(cb => cb.checked = checked);
+      ?.querySelectorAll('.bulk-student-row')
+      .forEach(row => this._applyStatus(row, status));
   },
 
   saveBulkEntry() {
@@ -184,48 +230,74 @@ const AttendanceTools = {
     const list = document.getElementById('bulk-student-list');
     if (!list) return;
 
-    const checkedIds   = new Set([...list.querySelectorAll('input:checked')].map(cb => cb.value));
-    const uncheckedIds = new Set([...list.querySelectorAll('input:not(:checked)')].map(cb => cb.value));
+    const rows       = list.querySelectorAll('.bulk-student-row');
+    const attendance = Storage.getAttendance();
+    const dateRecs   = attendance.filter(a => a.date === dateVal);
 
-    const attendance  = Storage.getAttendance();
-    const dateRecords = attendance.filter(a => a.date === dateVal);
+    let added = 0, updated = 0, removed = 0;
 
-    let added = 0, removed = 0;
+    rows.forEach(row => {
+      const id        = row.dataset.id;
+      const newStatus = row.dataset.status;
+      const existing  = dateRecs.find(r => r.studentId === id);
 
-    checkedIds.forEach(id => {
-      if (dateRecords.find(r => r.studentId === id)) return; // zaten var
-      const student = Storage.getStudentById(id);
-      if (!student) return;
-      Storage.addAttendanceRecord({
-        recordId:    'REC-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-        date:        dateVal,
-        time:        '—',
-        studentId:   student.id,
-        studentName: student.name,
-        category:    student.category || 'Genel',
-        status:      'Geldi',
-        sessionId:   session.id,
-        sessionName: session.name,
-        isMakeup:    false,
-        timestamp:   Date.now()
-      });
-      added++;
-    });
+      if (!newStatus) {
+        if (existing) {
+          Storage.removeAttendanceRecord(existing.recordId);
+          removed++;
+        }
+        return;
+      }
 
-    uncheckedIds.forEach(id => {
-      const rec = dateRecords.find(r => r.studentId === id);
-      if (!rec) return;
-      Storage.removeAttendanceRecord(rec.recordId);
-      removed++;
+      if (existing) {
+        if (existing.status !== newStatus) {
+          Storage.removeAttendanceRecord(existing.recordId);
+          const student = Storage.getStudentById(id);
+          Storage.addAttendanceRecord({
+            recordId:    'REC-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+            date:        dateVal,
+            time:        existing.time || '—',
+            studentId:   id,
+            studentName: student ? student.name : existing.studentName,
+            category:    student ? (student.category || 'Genel') : existing.category,
+            status:      newStatus,
+            sessionId:   session.id,
+            sessionName: session.name,
+            isMakeup:    false,
+            timestamp:   Date.now()
+          });
+          updated++;
+        }
+      } else {
+        const student = Storage.getStudentById(id);
+        if (!student) return;
+        Storage.addAttendanceRecord({
+          recordId:    'REC-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          date:        dateVal,
+          time:        '—',
+          studentId:   student.id,
+          studentName: student.name,
+          category:    student.category || 'Genel',
+          status:      newStatus,
+          sessionId:   session.id,
+          sessionName: session.name,
+          isMakeup:    false,
+          timestamp:   Date.now()
+        });
+        added++;
+      }
     });
 
     if (window.AttendanceManager) AttendanceManager.renderTodayList();
     if (window.HistoryManager)    HistoryManager.renderHistory();
 
-    // Listeyi güncelle (mevcut işaretler korunsun)
     this.loadBulkStudents();
 
-    const msg = `${added > 0 ? `${added} giriş eklendi` : ''}${added > 0 && removed > 0 ? ', ' : ''}${removed > 0 ? `${removed} giriş silindi` : ''}`.trim() || 'Değişiklik yok';
+    const parts = [];
+    if (added)   parts.push(`${added} giriş eklendi`);
+    if (updated) parts.push(`${updated} güncellendi`);
+    if (removed) parts.push(`${removed} silindi`);
+    const msg = parts.join(', ') || 'Değişiklik yok';
     AttendanceManager.showToast(`✅ ${dateVal} — ${msg}`, 'success');
   }
 };
